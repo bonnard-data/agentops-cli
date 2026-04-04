@@ -33,17 +33,34 @@ function getApiUrl() {
   }
 }
 
-function getToken() {
+function getCreds() {
   try {
-    const creds = JSON.parse(fs.readFileSync(CREDS_FILE, 'utf-8'))
-    return creds.accessToken
+    return JSON.parse(fs.readFileSync(CREDS_FILE, 'utf-8'))
   } catch {
     return null
   }
 }
 
+function saveCreds(creds, updates) {
+  const updated = { ...creds, ...updates }
+  fs.writeFileSync(CREDS_FILE, JSON.stringify(updated, null, 2), { mode: 0o600 })
+  return updated
+}
+
 function log(msg) {
   process.stderr.write(`AgentOps: ${msg}\n`)
+}
+
+// ─── Token refresh ───────────────────────────────────────────────────────
+
+async function refreshAccessToken(apiUrl, refreshToken) {
+  const res = await fetch(`${apiUrl}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+  if (!res.ok) return null
+  return res.json()
 }
 
 // ─── Fetch sync data ──────────────────────────────────────────────────────
@@ -52,6 +69,7 @@ async function fetchSync(apiUrl, token) {
   const res = await fetch(`${apiUrl}/api/sync`, {
     headers: { Authorization: `Bearer ${token}` },
   })
+  if (res.status === 401) return { status: 401 }
   if (!res.ok) {
     throw new Error(`sync failed: ${res.status}`)
   }
@@ -60,26 +78,24 @@ async function fetchSync(apiUrl, token) {
 
 // ─── Write skills ─────────────────────────────────────────────────────────
 
-function getCommandsDir() {
+function getSkillsDir() {
   switch (EDITOR) {
     case 'claude':
-      return process.env.CLAUDE_PLUGIN_ROOT
-        ? path.join(process.env.CLAUDE_PLUGIN_ROOT, 'commands')
-        : path.join(HOME, '.claude', 'commands')
+      return { dir: path.join(HOME, '.claude', 'skills'), format: 'skill' }
     case 'cursor':
-      return path.join(HOME, '.cursor', 'commands')
+      return { dir: path.join(HOME, '.cursor', 'commands'), format: 'command' }
     case 'codex':
-      return path.join(HOME, '.agents', 'skills')
+      return { dir: path.join(HOME, '.agents', 'skills'), format: 'skill' }
     default:
-      return path.join(HOME, '.cursor', 'commands')
+      return { dir: path.join(HOME, '.cursor', 'commands'), format: 'command' }
   }
 }
 
 function writeSkills(data) {
-  const dir = getCommandsDir()
+  const { dir, format } = getSkillsDir()
   fs.mkdirSync(dir, { recursive: true })
 
-  // Clean up existing agentops-* files only
+  // Clean up existing agentops-* files/dirs only
   try {
     for (const file of fs.readdirSync(dir)) {
       if (file.startsWith('agentops-')) {
@@ -91,8 +107,8 @@ function writeSkills(data) {
   for (const skill of data.skills || []) {
     const name = skill.name.startsWith('agentops-') ? skill.name : `agentops-${skill.name}`
 
-    if (EDITOR === 'codex') {
-      // Codex: SKILL.md in subdirectory
+    if (format === 'skill') {
+      // Claude Code + Codex: SKILL.md in subdirectory
       const skillDir = path.join(dir, name)
       fs.mkdirSync(skillDir, { recursive: true })
       fs.writeFileSync(
@@ -100,7 +116,7 @@ function writeSkills(data) {
         `---\nname: ${skill.name}\ndescription: ${skill.description}\n---\n\n${skill.content}`,
       )
     } else {
-      // Claude Code + Cursor: command .md with description frontmatter
+      // Cursor: command .md with description frontmatter
       fs.writeFileSync(
         path.join(dir, `${name}.md`),
         `---\ndescription: ${skill.description}\n---\n\n${skill.content}`,
@@ -108,7 +124,7 @@ function writeSkills(data) {
     }
   }
 
-  log(`synced ${(data.skills || []).length} skills for ${data.user?.email} (${(data.roles || []).join(', ')})`)
+  log(`synced ${(data.skills || []).length} skills to ${dir}`)
 }
 
 // ─── Write context ────────────────────────────────────────────────────────
@@ -176,9 +192,10 @@ function writeContext(data) {
     if (toolStatus) {
       content = content.replace(/> This file is managed by AgentOps/, toolStatus + '\n> This file is managed by AgentOps')
     }
-    const cwd = process.env.CLAUDE_PROJECT_DIR || process.cwd()
-    fs.writeFileSync(path.join(cwd, 'CLAUDE.md'), content)
-    log(`wrote CLAUDE.md to ${cwd}`)
+    const claudeDir = path.join(HOME, '.claude')
+    fs.mkdirSync(claudeDir, { recursive: true })
+    fs.writeFileSync(path.join(claudeDir, 'CLAUDE.md'), content)
+    log(`wrote global context to ~/.claude/CLAUDE.md`)
   }
 
   if (EDITOR === 'codex' && context.claude_md) {
@@ -217,15 +234,33 @@ function buildHookOutput(data) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────
 
-const token = getToken()
-if (!token) {
+const creds = getCreds()
+if (!creds?.accessToken) {
   log('not logged in. Run: npx @bonnard/agentops login')
   process.exit(0)
 }
 
 try {
   const apiUrl = getApiUrl()
-  const data = await fetchSync(apiUrl, token)
+  let data = await fetchSync(apiUrl, creds.accessToken)
+
+  // Token expired — try refresh
+  if (data.status === 401 && creds.refreshToken) {
+    log('token expired, refreshing...')
+    const refreshed = await refreshAccessToken(apiUrl, creds.refreshToken)
+    if (refreshed) {
+      saveCreds(creds, { accessToken: refreshed.accessToken, refreshToken: refreshed.refreshToken })
+      data = await fetchSync(apiUrl, refreshed.accessToken)
+    } else {
+      log('refresh failed. Run: npx @bonnard/agentops login')
+      process.exit(0)
+    }
+  }
+
+  if (data.status === 401) {
+    log('auth failed. Run: npx @bonnard/agentops login')
+    process.exit(0)
+  }
 
   writeSkills(data)
   writeContext(data)

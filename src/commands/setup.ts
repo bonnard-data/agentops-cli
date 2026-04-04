@@ -127,15 +127,42 @@ function setupCursor() {
 }
 
 function setupClaude() {
-  try {
-    execFileSync('claude', ['plugin', 'add', 'https://github.com/bonnard-data/agentops-plugin'], {
-      stdio: 'inherit',
-    })
-    console.log(pc.green('  Claude Code plugin installed'))
-  } catch {
-    console.log(pc.yellow('  Claude Code plugin install failed (may already be installed)'))
-    console.log(pc.dim('  Install manually: claude plugin add https://github.com/bonnard-data/agentops-plugin'))
+  const claudeDir = path.join(os.homedir(), '.claude')
+  const settingsPath = path.join(claudeDir, 'settings.json')
+
+  let settings: Record<string, unknown> = {}
+  if (fs.existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
+    } catch {
+      // corrupted — preserve as backup
+      fs.copyFileSync(settingsPath, settingsPath + '.bak')
+    }
   }
+
+  const hooks = (settings.hooks ?? {}) as Record<string, unknown[]>
+  const syncCommand = `node "${path.join(SCRIPTS_DIR, 'sync.mjs')}"`
+
+  // Remove existing agentops entries, add new one
+  const existing = (hooks.SessionStart ?? []) as Array<Record<string, unknown>>
+  const filtered = existing.filter((entry) => {
+    const entryHooks = (entry.hooks ?? []) as Array<Record<string, unknown>>
+    return !entryHooks.some((h) => (h.command as string)?.includes('agentops'))
+  })
+  filtered.push({
+    matcher: '',
+    hooks: [{ type: 'command', command: syncCommand, timeout: 30 }],
+  })
+  hooks.SessionStart = filtered
+
+  settings.hooks = hooks
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2))
+
+  // Ensure skills directory exists
+  fs.mkdirSync(path.join(claudeDir, 'skills'), { recursive: true })
+
+  console.log(pc.green('  Claude Code SessionStart hook configured'))
+  console.log(pc.dim('  Skills will sync to ~/.claude/skills/'))
 }
 
 function setupCodex() {
