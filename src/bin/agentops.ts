@@ -3,6 +3,14 @@ import { Command } from 'commander'
 import pc from 'picocolors'
 import { loginCommand } from '../commands/login.js'
 import { setupCommand } from '../commands/setup.js'
+import { searchCommand } from '../commands/search.js'
+import { installCommand } from '../commands/install.js'
+import { uninstallCommand } from '../commands/uninstall.js'
+import { listCommand } from '../commands/list.js'
+import { createCommand } from '../commands/create.js'
+import { submitCommand } from '../commands/submit.js'
+import { updateCommand } from '../commands/update.js'
+import { mySkillsCommand } from '../commands/my-skills.js'
 import { loadCredentials, clearCredentials } from '../lib/credentials.js'
 
 const program = new Command()
@@ -46,5 +54,58 @@ program
     console.log(`${pc.bold(creds.user.email)} (${creds.org.name})`)
     console.log(`Role: ${creds.user.role}`)
   })
+
+program
+  .command('search [query]')
+  .description('Search the org skill library')
+  .option('--url <url>', 'AgentOps server URL')
+  .option('--tags [tags]', 'List all tags (no value) or filter by tags (comma-separated)')
+  .option('--authors', 'List all skill authors')
+  .option('--author <name>', 'Filter by author name')
+  .option('--status <status>', 'Filter by status (admin only)')
+  .action(searchCommand)
+
+program
+  .command('install <name>')
+  .description('Install a skill from the org library')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(installCommand)
+
+program
+  .command('uninstall <name>')
+  .description('Uninstall a personal skill')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(uninstallCommand)
+
+program
+  .command('list')
+  .description('Show your synced skills (role + personal)')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(listCommand)
+
+program
+  .command('create [name]')
+  .description('Scaffold a new skill in your commands dir')
+  .option('--tags <tags>', 'Tags for discovery (comma-separated)')
+  .action(createCommand)
+
+program
+  .command('submit <name>')
+  .description('Submit a skill for review (reads from your commands dir)')
+  .option('--url <url>', 'AgentOps server URL')
+  .option('--tags <tags>', 'Tags for discovery (comma-separated)')
+  .action(submitCommand)
+
+program
+  .command('update <name>')
+  .description('Push local skill edits to the server')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(updateCommand)
+
+program
+  .command('my-skills')
+  .description('Show your authored and installed skills')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(mySkillsCommand)
 
 program.parse()

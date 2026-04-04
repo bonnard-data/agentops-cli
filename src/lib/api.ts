@@ -21,6 +21,21 @@ export async function post(path: string, body: unknown, baseUrl: string): Promis
   })
 }
 
+export async function put(path: string, body: unknown, baseUrl: string): Promise<Response> {
+  return fetch(`${baseUrl}${path}`, {
+    method: 'PUT',
+    headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function del(path: string, baseUrl: string): Promise<Response> {
+  return fetch(`${baseUrl}${path}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  })
+}
+
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {}
   const creds = loadCredentials()
