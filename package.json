@@ -1,13 +1,11 @@
 {
   "name": "@bonnard/agentops",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "type": "module",
   "bin": {
     "agentops": "./dist/bin/agentops.mjs"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "repository": {
     "type": "git",
     "url": "https://github.com/bonnard-data/agentops-cli"
@@ -22,17 +20,17 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "commander": "^14.0.3",
-    "open": "^11.0.0",
-    "picocolors": "^1.1.1"
+    "commander": "14.0.3",
+    "open": "11.0.0",
+    "picocolors": "1.1.1"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/node": "^22.15.0",
-    "eslint": "^10.0.1",
-    "tsdown": "^0.21.4",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
-    "typescript-eslint": "^8.57.2"
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.19.17",
+    "eslint": "10.2.0",
+    "tsdown": "0.21.7",
+    "tsx": "4.21.0",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.58.0"
   }
 }
