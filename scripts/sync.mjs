@@ -9,19 +9,12 @@ const HOME = os.homedir()
 const CREDS_FILE = path.join(HOME, '.agentops', 'credentials.json')
 const CONFIG_FILE = path.join(HOME, '.agentops', 'config.json')
 
-// Editor type: set by setup command in ~/.agentops/editor.json, or via env var
-const EDITOR = process.env.AGENTOPS_EDITOR || readEditorType()
+// Plugin root — set by the editor's plugin system, or inferred from this script's location
+const PLUGIN_ROOT = process.env.CLAUDE_PLUGIN_ROOT
+  || process.env.CURSOR_PLUGIN_ROOT
+  || path.dirname(path.dirname(new URL(import.meta.url).pathname))
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
-
-function readEditorType() {
-  try {
-    const editorFile = path.join(HOME, '.agentops', 'editor.json')
-    return JSON.parse(fs.readFileSync(editorFile, 'utf-8')).editor || 'cursor'
-  } catch {
-    return 'cursor'
-  }
-}
 
 function getApiUrl() {
   if (process.env.AGENTOPS_API_URL) return process.env.AGENTOPS_API_URL
@@ -78,53 +71,34 @@ async function fetchSync(apiUrl, token) {
 
 // ─── Write skills ─────────────────────────────────────────────────────────
 
-function getSkillsDir() {
-  switch (EDITOR) {
-    case 'claude':
-      return { dir: path.join(HOME, '.claude', 'skills'), format: 'skill' }
-    case 'cursor':
-      return { dir: path.join(HOME, '.cursor', 'commands'), format: 'command' }
-    case 'codex':
-      return { dir: path.join(HOME, '.agents', 'skills'), format: 'skill' }
-    default:
-      return { dir: path.join(HOME, '.cursor', 'commands'), format: 'command' }
-  }
-}
-
 function writeSkills(data) {
-  const { dir, format } = getSkillsDir()
-  fs.mkdirSync(dir, { recursive: true })
+  const skillsDir = path.join(PLUGIN_ROOT, 'skills')
+  fs.mkdirSync(skillsDir, { recursive: true })
 
-  // Clean up existing agentops-* files/dirs only
+  // Build set of expected skill dir names from server response
+  const expectedNames = new Set()
+  for (const skill of data.skills || []) {
+    const name = skill.name.startsWith('agentops-') ? skill.name : `agentops-${skill.name}`
+    expectedNames.add(name)
+
+    const skillDir = path.join(skillsDir, name)
+    fs.mkdirSync(skillDir, { recursive: true })
+    fs.writeFileSync(
+      path.join(skillDir, 'SKILL.md'),
+      `---\nname: ${skill.name}\ndescription: ${skill.description}\n---\n\n${skill.content}`,
+    )
+  }
+
+  // Delete agentops-* dirs NOT in server response (uninstalled or removed from role)
   try {
-    for (const file of fs.readdirSync(dir)) {
-      if (file.startsWith('agentops-')) {
-        fs.rmSync(path.join(dir, file), { recursive: true, force: true })
+    for (const file of fs.readdirSync(skillsDir)) {
+      if (file.startsWith('agentops-') && !expectedNames.has(file)) {
+        fs.rmSync(path.join(skillsDir, file), { recursive: true, force: true })
       }
     }
   } catch { /* dir may not exist */ }
 
-  for (const skill of data.skills || []) {
-    const name = skill.name.startsWith('agentops-') ? skill.name : `agentops-${skill.name}`
-
-    if (format === 'skill') {
-      // Claude Code + Codex: SKILL.md in subdirectory
-      const skillDir = path.join(dir, name)
-      fs.mkdirSync(skillDir, { recursive: true })
-      fs.writeFileSync(
-        path.join(skillDir, 'SKILL.md'),
-        `---\nname: ${skill.name}\ndescription: ${skill.description}\n---\n\n${skill.content}`,
-      )
-    } else {
-      // Cursor: command .md with description frontmatter
-      fs.writeFileSync(
-        path.join(dir, `${name}.md`),
-        `---\ndescription: ${skill.description}\n---\n\n${skill.content}`,
-      )
-    }
-  }
-
-  log(`synced ${(data.skills || []).length} skills to ${dir}`)
+  log(`synced ${(data.skills || []).length} skills to ${skillsDir}`)
 }
 
 // ─── Write context ────────────────────────────────────────────────────────
@@ -176,37 +150,20 @@ function writeContext(data) {
   const context = data.context || {}
   const toolStatus = checkTools(context.tools)
 
-  if (EDITOR === 'cursor' && context.rules_mdc) {
-    let content = context.rules_mdc
-    if (toolStatus) {
-      content = content.replace(/> This rule is managed by AgentOps/, toolStatus + '\n> This rule is managed by AgentOps')
-    }
-    const rulesDir = path.join(HOME, '.cursor', 'rules')
-    fs.mkdirSync(rulesDir, { recursive: true })
-    fs.writeFileSync(path.join(rulesDir, 'agentops-context.mdc'), content)
-    log('wrote Cursor rules to ~/.cursor/rules/agentops-context.mdc')
+  const content = context.claude_md || context.rules_mdc
+  if (!content) return
+
+  let finalContent = content
+  if (toolStatus) {
+    finalContent = finalContent
+      .replace(/> This file is managed by AgentOps/, toolStatus + '\n> This file is managed by AgentOps')
+      .replace(/> This rule is managed by AgentOps/, toolStatus + '\n> This rule is managed by AgentOps')
   }
 
-  if (EDITOR === 'claude' && context.claude_md) {
-    let content = context.claude_md
-    if (toolStatus) {
-      content = content.replace(/> This file is managed by AgentOps/, toolStatus + '\n> This file is managed by AgentOps')
-    }
-    const rulesDir = path.join(HOME, '.claude', 'rules')
-    fs.mkdirSync(rulesDir, { recursive: true })
-    fs.writeFileSync(path.join(rulesDir, 'agentops-context.md'), content)
-    log(`wrote global context to ~/.claude/rules/agentops-context.md`)
-  }
-
-  if (EDITOR === 'codex' && context.claude_md) {
-    let content = context.claude_md
-    if (toolStatus) {
-      content = content.replace(/> This file is managed by AgentOps/, toolStatus + '\n> This file is managed by AgentOps')
-    }
-    const cwd = process.cwd()
-    fs.writeFileSync(path.join(cwd, 'AGENTS.md'), content)
-    log(`wrote AGENTS.md to ${cwd}`)
-  }
+  const rulesDir = path.join(PLUGIN_ROOT, 'rules')
+  fs.mkdirSync(rulesDir, { recursive: true })
+  fs.writeFileSync(path.join(rulesDir, 'agentops-context.md'), finalContent)
+  log(`wrote context to ${rulesDir}/agentops-context.md`)
 }
 
 // ─── Hook output ──────────────────────────────────────────────────────────

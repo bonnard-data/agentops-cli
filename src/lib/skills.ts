@@ -13,8 +13,31 @@ export function getEditorType(): string {
   }
 }
 
+function getPluginInstallPath(): string | null {
+  try {
+    const installedPath = path.join(HOME, '.claude', 'plugins', 'installed_plugins.json')
+    const data = JSON.parse(fs.readFileSync(installedPath, 'utf-8')) as {
+      plugins: Record<string, Array<{ installPath: string }>>
+    }
+    for (const [key, entries] of Object.entries(data.plugins)) {
+      if (key.startsWith('agentops')) {
+        return entries[0]?.installPath ?? null
+      }
+    }
+  } catch { /* not installed */ }
+  return null
+}
+
 export function getCommandsDir(editor?: string): string {
   const ed = editor ?? getEditorType()
+
+  // For Claude/Cursor, try plugin path first
+  if (ed === 'claude' || ed === 'cursor') {
+    const pluginPath = getPluginInstallPath()
+    if (pluginPath) return path.join(pluginPath, 'skills')
+  }
+
+  // Fallback to user-level paths
   switch (ed) {
     case 'claude':
       return path.join(HOME, '.claude', 'skills')

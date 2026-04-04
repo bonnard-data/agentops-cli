@@ -1,0 +1,13 @@
+{
+  "name": "agentops",
+  "version": "1.0.0",
+  "description": "AgentOps — org-managed skills, context, and tools for your team",
+  "author": {
+    "name": "Bonnard",
+    "url": "https://bonnard.ai"
+  },
+  "repository": "https://github.com/bonnard-data/agentops-cli",
+  "license": "MIT",
+  "hooks": "./hooks/hooks.json",
+  "skills": "./skills/"
+}

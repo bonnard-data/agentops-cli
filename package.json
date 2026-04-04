@@ -5,7 +5,7 @@
   "bin": {
     "agentops": "./dist/bin/agentops.mjs"
   },
-  "files": ["dist", "scripts"],
+  "files": ["dist", "scripts", "hooks", ".claude-plugin", ".cursor-plugin"],
   "repository": {
     "type": "git",
     "url": "https://github.com/bonnard-data/agentops-cli"
