@@ -2,6 +2,7 @@
 import { Command } from 'commander'
 import pc from 'picocolors'
 import { loginCommand } from '../commands/login.js'
+import { setupCommand } from '../commands/setup.js'
 import { loadCredentials, clearCredentials } from '../lib/credentials.js'
 
 const program = new Command()
@@ -16,6 +17,13 @@ program
   .description('Authenticate with AgentOps via your browser')
   .option('--url <url>', 'AgentOps server URL')
   .action(loginCommand)
+
+program
+  .command('setup')
+  .description('Configure an editor for AgentOps skill sync')
+  .requiredOption('--editor <editor>', 'Editor to configure (cursor, claude, codex)')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(setupCommand)
 
 program
   .command('logout')
