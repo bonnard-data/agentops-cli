@@ -85,13 +85,13 @@ program
 
 program
   .command('create [name]')
-  .description('Scaffold a new skill in your commands dir')
+  .description('Scaffold a new skill locally')
   .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .action(createCommand)
 
 program
   .command('submit <name>')
-  .description('Submit a skill for review (reads from your commands dir)')
+  .description('Submit a skill for review')
   .option('--url <url>', 'AgentOps server URL')
   .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .action(submitCommand)

@@ -17,7 +17,7 @@ export function getCommandsDir(editor?: string): string {
   const ed = editor ?? getEditorType()
   switch (ed) {
     case 'claude':
-      return path.join(HOME, '.claude', 'commands')
+      return path.join(HOME, '.claude', 'skills')
     case 'codex':
       return path.join(HOME, '.agents', 'skills')
     default:
@@ -28,9 +28,9 @@ export function getCommandsDir(editor?: string): string {
 export function getSkillFilePath(name: string, editor?: string): string {
   const ed = editor ?? getEditorType()
   const dir = getCommandsDir(ed)
-  const fileName = `agentops-${name}`
+  const fileName = name.startsWith('agentops-') ? name : `agentops-${name}`
 
-  if (ed === 'codex') {
+  if (ed === 'claude' || ed === 'codex') {
     return path.join(dir, fileName, 'SKILL.md')
   }
   return path.join(dir, `${fileName}.md`)
@@ -39,12 +39,12 @@ export function getSkillFilePath(name: string, editor?: string): string {
 export function writeSkillFile(skill: { name: string; description: string; content: string }, editor?: string): string {
   const ed = editor ?? getEditorType()
   const dir = getCommandsDir(ed)
-  const fileName = `agentops-${skill.name}`
+  const fileName = skill.name.startsWith('agentops-') ? skill.name : `agentops-${skill.name}`
 
   fs.mkdirSync(dir, { recursive: true })
 
   let filePath: string
-  if (ed === 'codex') {
+  if (ed === 'claude' || ed === 'codex') {
     const skillDir = path.join(dir, fileName)
     fs.mkdirSync(skillDir, { recursive: true })
     filePath = path.join(skillDir, 'SKILL.md')
@@ -60,9 +60,9 @@ export function writeSkillFile(skill: { name: string; description: string; conte
 export function deleteSkillFile(name: string, editor?: string): void {
   const ed = editor ?? getEditorType()
   const dir = getCommandsDir(ed)
-  const fileName = `agentops-${name}`
+  const fileName = name.startsWith('agentops-') ? name : `agentops-${name}`
 
-  if (ed === 'codex') {
+  if (ed === 'claude' || ed === 'codex') {
     const skillDir = path.join(dir, fileName)
     fs.rmSync(skillDir, { recursive: true, force: true })
   } else {
