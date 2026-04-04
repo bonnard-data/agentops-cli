@@ -1,11 +1,14 @@
 {
   "name": "@bonnard/agentops",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "type": "module",
   "bin": {
     "agentops": "./dist/bin/agentops.mjs"
   },
-  "files": ["dist", "scripts"],
+  "files": [
+    "dist",
+    "scripts"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/bonnard-data/agentops-cli"
