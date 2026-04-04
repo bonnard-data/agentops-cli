@@ -192,10 +192,10 @@ function writeContext(data) {
     if (toolStatus) {
       content = content.replace(/> This file is managed by AgentOps/, toolStatus + '\n> This file is managed by AgentOps')
     }
-    const claudeDir = path.join(HOME, '.claude')
-    fs.mkdirSync(claudeDir, { recursive: true })
-    fs.writeFileSync(path.join(claudeDir, 'CLAUDE.md'), content)
-    log(`wrote global context to ~/.claude/CLAUDE.md`)
+    const rulesDir = path.join(HOME, '.claude', 'rules')
+    fs.mkdirSync(rulesDir, { recursive: true })
+    fs.writeFileSync(path.join(rulesDir, 'agentops-context.md'), content)
+    log(`wrote global context to ~/.claude/rules/agentops-context.md`)
   }
 
   if (EDITOR === 'codex' && context.claude_md) {
