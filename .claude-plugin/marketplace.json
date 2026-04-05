@@ -1,0 +1,14 @@
+{
+  "name": "bonnard-agentops",
+  "owner": {
+    "name": "Bonnard"
+  },
+  "plugins": [
+    {
+      "name": "agentops",
+      "source": "./",
+      "description": "AgentOps — org-managed skills, context, and tools for your team",
+      "version": "1.0.0"
+    }
+  ]
+}

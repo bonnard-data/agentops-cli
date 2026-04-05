@@ -5,7 +5,9 @@ import { loadCredentials } from '../lib/credentials.js'
 const SUPPORTED_EDITORS = ['cursor', 'claude', 'codex'] as const
 type Editor = (typeof SUPPORTED_EDITORS)[number]
 
-const PLUGIN_REPO = 'bonnard-data/agentops-cli'
+const MARKETPLACE_REPO = 'bonnard-data/agentops-cli'
+const MARKETPLACE_NAME = 'bonnard-agentops'
+const PLUGIN_NAME = 'agentops'
 
 export async function setupCommand(options: { editor?: string; url?: string }) {
   const creds = loadCredentials()
@@ -24,29 +26,29 @@ export async function setupCommand(options: { editor?: string; url?: string }) {
   console.log(`Setting up for ${pc.bold(editor)}...`)
   console.log()
 
-  switch (editor as Editor) {
-    case 'claude':
-      installPlugin('claude', ['claude', 'plugin', 'install', PLUGIN_REPO])
-      break
-    case 'cursor':
-      installPlugin('cursor', ['cursor', 'plugin', 'install', PLUGIN_REPO])
-      break
-    case 'codex':
-      installPlugin('codex', ['codex', 'plugin', 'install', PLUGIN_REPO])
-      break
+  const cli = editor === 'claude' ? 'claude' : editor
+  const pluginRef = `${PLUGIN_NAME}@${MARKETPLACE_NAME}`
+
+  // 1. Add marketplace
+  try {
+    execFileSync(cli, ['plugin', 'marketplace', 'add', MARKETPLACE_REPO], { stdio: 'inherit' })
+    console.log(pc.green('  Marketplace added'))
+  } catch {
+    console.log(pc.dim('  Marketplace already configured'))
+  }
+
+  // 2. Install plugin
+  try {
+    execFileSync(cli, ['plugin', 'install', pluginRef], { stdio: 'inherit' })
+    console.log(pc.green(`  Plugin installed`))
+  } catch {
+    console.log(pc.yellow('  Plugin install failed.'))
+    console.log(pc.dim(`  Try manually:`))
+    console.log(pc.dim(`    ${cli} plugin marketplace add ${MARKETPLACE_REPO}`))
+    console.log(pc.dim(`    ${cli} plugin install ${pluginRef}`))
   }
 
   console.log()
   console.log(pc.green('Setup complete.'))
   console.log(pc.dim('Skills will sync automatically on every session start.'))
-}
-
-function installPlugin(editor: string, command: string[]) {
-  try {
-    execFileSync(command[0]!, command.slice(1), { stdio: 'inherit' })
-    console.log(pc.green(`  ${editor} plugin installed`))
-  } catch {
-    console.log(pc.yellow(`  Plugin install failed.`))
-    console.log(pc.dim(`  Try manually: ${command.join(' ')}`))
-  }
 }
