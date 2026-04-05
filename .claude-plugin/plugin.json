@@ -8,6 +8,5 @@
   },
   "repository": "https://github.com/bonnard-data/agentops-cli",
   "license": "MIT",
-  "hooks": "./hooks/hooks.json",
   "skills": "./skills/"
 }
