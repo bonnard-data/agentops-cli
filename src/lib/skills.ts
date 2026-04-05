@@ -48,12 +48,16 @@ export function getCommandsDir(editor?: string): string {
   }
 }
 
+function isPluginPath(dir: string): boolean {
+  return dir.includes('.claude/plugins/') || dir.includes('.cursor/plugins/')
+}
+
 export function getSkillFilePath(name: string, editor?: string): string {
   const ed = editor ?? getEditorType()
   const dir = getCommandsDir(ed)
   const fileName = name.startsWith('agentops-') ? name : `agentops-${name}`
 
-  if (ed === 'claude' || ed === 'codex') {
+  if (ed === 'claude' || ed === 'codex' || isPluginPath(dir)) {
     return path.join(dir, fileName, 'SKILL.md')
   }
   return path.join(dir, `${fileName}.md`)
@@ -63,11 +67,12 @@ export function writeSkillFile(skill: { name: string; description: string; conte
   const ed = editor ?? getEditorType()
   const dir = getCommandsDir(ed)
   const fileName = skill.name.startsWith('agentops-') ? skill.name : `agentops-${skill.name}`
+  const useSkillFormat = ed === 'claude' || ed === 'codex' || isPluginPath(dir)
 
   fs.mkdirSync(dir, { recursive: true })
 
   let filePath: string
-  if (ed === 'claude' || ed === 'codex') {
+  if (useSkillFormat) {
     const skillDir = path.join(dir, fileName)
     fs.mkdirSync(skillDir, { recursive: true })
     filePath = path.join(skillDir, 'SKILL.md')
@@ -85,7 +90,7 @@ export function deleteSkillFile(name: string, editor?: string): void {
   const dir = getCommandsDir(ed)
   const fileName = name.startsWith('agentops-') ? name : `agentops-${name}`
 
-  if (ed === 'claude' || ed === 'codex') {
+  if (ed === 'claude' || ed === 'codex' || isPluginPath(dir)) {
     const skillDir = path.join(dir, fileName)
     fs.rmSync(skillDir, { recursive: true, force: true })
   } else {
