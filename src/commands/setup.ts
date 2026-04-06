@@ -86,6 +86,26 @@ function setupCursor() {
   // Ensure skills and rules dirs exist
   fs.mkdirSync(path.join(pluginDir, 'skills'), { recursive: true })
   fs.mkdirSync(path.join(pluginDir, 'rules'), { recursive: true })
+  fs.mkdirSync(path.join(home, '.cursor', 'skills'), { recursive: true })
+  fs.mkdirSync(path.join(home, '.cursor', 'rules'), { recursive: true })
+
+  // Write hooks.json with absolute path (Cursor doesn't set CURSOR_PLUGIN_ROOT)
+  const hooksContent = {
+    description: 'AgentOps sync hook — syncs skills and context on session start',
+    hooks: {
+      SessionStart: [
+        {
+          hooks: [
+            {
+              type: 'command',
+              command: `node ${path.join(pluginDir, 'scripts', 'sync.mjs')}`,
+            },
+          ],
+        },
+      ],
+    },
+  }
+  fs.writeFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), JSON.stringify(hooksContent, null, 2))
 
   console.log(pc.green('  Plugin installed to ~/.cursor/plugins/agentops/'))
   console.log(pc.dim('  Skills will sync to ~/.cursor/skills/'))
