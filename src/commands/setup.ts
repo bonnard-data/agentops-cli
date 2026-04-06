@@ -69,7 +69,7 @@ function setupClaude() {
 
 function setupCursor() {
   const home = os.homedir()
-  const pluginDir = path.join(home, '.cursor', 'plugins', 'agentops')
+  const pluginDir = path.join(home, '.cursor', 'plugins', 'local', 'agentops')
 
   // Copy plugin files from the npm package to ~/.cursor/plugins/agentops/
   const sourceDir = findPluginSource()
@@ -89,18 +89,12 @@ function setupCursor() {
   fs.mkdirSync(path.join(home, '.cursor', 'skills'), { recursive: true })
   fs.mkdirSync(path.join(home, '.cursor', 'rules'), { recursive: true })
 
-  // Write hooks.json with absolute path (Cursor doesn't set CURSOR_PLUGIN_ROOT)
+  // Write hooks.json with absolute path and Cursor event names (lowercase)
   const hooksContent = {
-    description: 'AgentOps sync hook — syncs skills and context on session start',
     hooks: {
-      SessionStart: [
+      sessionStart: [
         {
-          hooks: [
-            {
-              type: 'command',
-              command: `node ${path.join(pluginDir, 'scripts', 'sync.mjs')}`,
-            },
-          ],
+          command: `node ${path.join(pluginDir, 'scripts', 'sync.mjs')}`,
         },
       ],
     },
