@@ -75,10 +75,15 @@ function writeSkills(data) {
   const skillsDir = path.join(PLUGIN_ROOT, 'skills')
   fs.mkdirSync(skillsDir, { recursive: true })
 
-  // Build set of expected skill dir names from server response
+  // Only write role-synced skills to plugin dir (source: 'org')
+  // User-installed/authored skills live in ~/.claude/skills/ (managed by CLI)
+  const orgSkills = (data.skills || []).filter((s) => s.source === 'org')
+
+  // Build set of expected skill dir names
   const expectedNames = new Set()
-  for (const skill of data.skills || []) {
-    const name = skill.name.startsWith('agentops-') ? skill.name : `agentops-${skill.name}`
+  for (const skill of orgSkills) {
+    // No agentops- prefix — plugin namespace provides it (/agentops:code-reviewer)
+    const name = skill.name.startsWith('agentops-') ? skill.name.slice(9) : skill.name
     expectedNames.add(name)
 
     const skillDir = path.join(skillsDir, name)
@@ -89,16 +94,17 @@ function writeSkills(data) {
     )
   }
 
-  // Delete agentops-* dirs NOT in server response (uninstalled or removed from role)
+  // Delete dirs NOT in server response (removed from role)
+  // Only clean non-dotfiles that aren't .gitkeep
   try {
     for (const file of fs.readdirSync(skillsDir)) {
-      if (file.startsWith('agentops-') && !expectedNames.has(file)) {
+      if (!file.startsWith('.') && !expectedNames.has(file)) {
         fs.rmSync(path.join(skillsDir, file), { recursive: true, force: true })
       }
     }
   } catch { /* dir may not exist */ }
 
-  log(`synced ${(data.skills || []).length} skills to ${skillsDir}`)
+  log(`synced ${orgSkills.length} role skills to ${skillsDir}`)
 }
 
 // ─── Write context ────────────────────────────────────────────────────────
@@ -160,10 +166,24 @@ function writeContext(data) {
       .replace(/> This rule is managed by AgentOps/, toolStatus + '\n> This rule is managed by AgentOps')
   }
 
-  const rulesDir = path.join(HOME, '.claude', 'rules')
-  fs.mkdirSync(rulesDir, { recursive: true })
-  fs.writeFileSync(path.join(rulesDir, 'agentops-context.md'), finalContent)
-  log(`wrote context to ~/.claude/rules/agentops-context.md`)
+  // Detect editor from plugin root path
+  const isCursor = PLUGIN_ROOT.includes('.cursor/')
+
+  if (isCursor) {
+    // Cursor: write .mdc format to ~/.cursor/rules/
+    const rulesDir = path.join(HOME, '.cursor', 'rules')
+    fs.mkdirSync(rulesDir, { recursive: true })
+    // Wrap in MDC frontmatter
+    const mdcContent = `---\ndescription: AgentOps org context\nalwaysApply: true\n---\n\n${finalContent}`
+    fs.writeFileSync(path.join(rulesDir, 'agentops-context.mdc'), mdcContent)
+    log('wrote context to ~/.cursor/rules/agentops-context.mdc')
+  } else {
+    // Claude Code: write .md to ~/.claude/rules/
+    const rulesDir = path.join(HOME, '.claude', 'rules')
+    fs.mkdirSync(rulesDir, { recursive: true })
+    fs.writeFileSync(path.join(rulesDir, 'agentops-context.md'), finalContent)
+    log('wrote context to ~/.claude/rules/agentops-context.md')
+  }
 }
 
 // ─── Hook output ──────────────────────────────────────────────────────────
@@ -181,9 +201,15 @@ function buildHookOutput(data) {
   }
 
   // Always add skill summary
-  const skillNames = (data.skills || []).map((s) => s.name).join(', ')
+  const allSkills = data.skills || []
+  const orgSkills = allSkills.filter((s) => s.source === 'org')
+  const userSkills = allSkills.filter((s) => s.source === 'user')
   const roles = (data.roles || []).join(', ')
-  const summary = `[AgentOps] ${data.user?.email} (${roles}). ${(data.skills || []).length} skills synced: ${skillNames}.`
+  const orgNames = orgSkills.map((s) => s.name).join(', ')
+  let summary = `[AgentOps] ${data.user?.email} (${roles}). ${orgSkills.length} role skills: ${orgNames}.`
+  if (userSkills.length > 0) {
+    summary += ` ${userSkills.length} personal: ${userSkills.map((s) => s.name).join(', ')}.`
+  }
   hso.additionalContext = hso.additionalContext ? `${hso.additionalContext}\n\n${summary}` : summary
 
   return { hookSpecificOutput: hso }

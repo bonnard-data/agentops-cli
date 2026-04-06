@@ -5,98 +5,57 @@ import os from 'node:os'
 const HOME = os.homedir()
 
 export function getEditorType(): string {
-  try {
-    const editorFile = path.join(HOME, '.agentops', 'editor.json')
-    return JSON.parse(fs.readFileSync(editorFile, 'utf-8')).editor || 'cursor'
-  } catch {
-    return 'cursor'
-  }
-}
-
-function getPluginInstallPath(): string | null {
+  // Auto-detect: check if agentops plugin is installed for Claude
   try {
     const installedPath = path.join(HOME, '.claude', 'plugins', 'installed_plugins.json')
     const data = JSON.parse(fs.readFileSync(installedPath, 'utf-8')) as {
-      plugins: Record<string, Array<{ installPath: string }>>
+      plugins: Record<string, unknown>
     }
-    for (const [key, entries] of Object.entries(data.plugins)) {
-      if (key.startsWith('agentops')) {
-        return entries[0]?.installPath ?? null
-      }
+    for (const key of Object.keys(data.plugins)) {
+      if (key.startsWith('agentops')) return 'claude'
     }
   } catch { /* not installed */ }
-  return null
+
+  // TODO: add Cursor/Codex detection when supported
+  return 'claude'
 }
 
 export function getCommandsDir(editor?: string): string {
   const ed = editor ?? getEditorType()
-
-  // For Claude/Cursor, try plugin path first
-  if (ed === 'claude' || ed === 'cursor') {
-    const pluginPath = getPluginInstallPath()
-    if (pluginPath) return path.join(pluginPath, 'skills')
-  }
-
-  // Fallback to user-level paths
   switch (ed) {
     case 'claude':
       return path.join(HOME, '.claude', 'skills')
+    case 'cursor':
+      return path.join(HOME, '.cursor', 'skills')
     case 'codex':
       return path.join(HOME, '.agents', 'skills')
     default:
-      return path.join(HOME, '.cursor', 'commands')
+      return path.join(HOME, '.claude', 'skills')
   }
 }
 
-function isPluginPath(dir: string): boolean {
-  return dir.includes('.claude/plugins/') || dir.includes('.cursor/plugins/')
-}
-
-export function getSkillFilePath(name: string, editor?: string): string {
-  const ed = editor ?? getEditorType()
-  const dir = getCommandsDir(ed)
+export function getSkillFilePath(name: string): string {
+  const dir = getCommandsDir()
   const fileName = name.startsWith('agentops-') ? name : `agentops-${name}`
-
-  if (ed === 'claude' || ed === 'codex' || isPluginPath(dir)) {
-    return path.join(dir, fileName, 'SKILL.md')
-  }
-  return path.join(dir, `${fileName}.md`)
+  return path.join(dir, fileName, 'SKILL.md')
 }
 
-export function writeSkillFile(skill: { name: string; description: string; content: string }, editor?: string): string {
-  const ed = editor ?? getEditorType()
-  const dir = getCommandsDir(ed)
+export function writeSkillFile(skill: { name: string; description: string; content: string }): string {
+  const dir = getCommandsDir()
   const fileName = skill.name.startsWith('agentops-') ? skill.name : `agentops-${skill.name}`
-  const useSkillFormat = ed === 'claude' || ed === 'codex' || isPluginPath(dir)
 
-  fs.mkdirSync(dir, { recursive: true })
-
-  let filePath: string
-  if (useSkillFormat) {
-    const skillDir = path.join(dir, fileName)
-    fs.mkdirSync(skillDir, { recursive: true })
-    filePath = path.join(skillDir, 'SKILL.md')
-    fs.writeFileSync(filePath, `---\nname: ${skill.name}\ndescription: ${skill.description}\n---\n\n${skill.content}`)
-  } else {
-    filePath = path.join(dir, `${fileName}.md`)
-    fs.writeFileSync(filePath, `---\ndescription: ${skill.description}\n---\n\n${skill.content}`)
-  }
-
+  const skillDir = path.join(dir, fileName)
+  fs.mkdirSync(skillDir, { recursive: true })
+  const filePath = path.join(skillDir, 'SKILL.md')
+  fs.writeFileSync(filePath, `---\nname: ${skill.name}\ndescription: ${skill.description}\n---\n\n${skill.content}`)
   return filePath
 }
 
-export function deleteSkillFile(name: string, editor?: string): void {
-  const ed = editor ?? getEditorType()
-  const dir = getCommandsDir(ed)
+export function deleteSkillFile(name: string): void {
+  const dir = getCommandsDir()
   const fileName = name.startsWith('agentops-') ? name : `agentops-${name}`
-
-  if (ed === 'claude' || ed === 'codex' || isPluginPath(dir)) {
-    const skillDir = path.join(dir, fileName)
-    fs.rmSync(skillDir, { recursive: true, force: true })
-  } else {
-    const filePath = path.join(dir, `${fileName}.md`)
-    try { fs.unlinkSync(filePath) } catch { /* already gone */ }
-  }
+  const skillDir = path.join(dir, fileName)
+  fs.rmSync(skillDir, { recursive: true, force: true })
 }
 
 export interface SkillFrontmatter {
@@ -146,7 +105,8 @@ export function readSkillFromCommandsDir(name: string): { frontmatter: SkillFron
   const filePath = getSkillFilePath(name)
 
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Skill file not found: ${filePath}\nDid you run: agentops skills create ${name}`)
+    const cleanName = name.startsWith('agentops-') ? name.slice(9) : name
+    throw new Error(`Skill file not found: ${filePath}\nDid you run: agentops skills create ${cleanName}`)
   }
 
   const raw = fs.readFileSync(filePath, 'utf-8')

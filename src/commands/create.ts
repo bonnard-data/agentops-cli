@@ -1,5 +1,5 @@
 import pc from 'picocolors'
-import { getEditorType, getSkillFilePath, writeSkillFile } from '../lib/skills.js'
+import { getSkillFilePath, writeSkillFile } from '../lib/skills.js'
 
 export async function createCommand(name: string | undefined, opts: { tags?: string }) {
   const skillName = name ?? 'my-skill'
@@ -9,8 +9,7 @@ export async function createCommand(name: string | undefined, opts: { tags?: str
     process.exit(1)
   }
 
-  const editor = getEditorType()
-  const filePath = getSkillFilePath(skillName, editor)
+  const filePath = getSkillFilePath(skillName)
 
   // Check if already exists
   const fs = await import('node:fs')
@@ -43,7 +42,7 @@ Describe the skill's purpose and workflow here.
     name: skillName,
     description: 'A brief description of what this skill does and when to use it',
     content,
-  }, editor)
+  })
 
   const tagsHint = opts.tags ? '' : ' --tags engineering,testing'
   console.log(pc.green(`✓ Created ${filePath}`))
