@@ -160,10 +160,10 @@ function writeContext(data) {
       .replace(/> This rule is managed by AgentOps/, toolStatus + '\n> This rule is managed by AgentOps')
   }
 
-  const rulesDir = path.join(PLUGIN_ROOT, 'rules')
+  const rulesDir = path.join(HOME, '.claude', 'rules')
   fs.mkdirSync(rulesDir, { recursive: true })
   fs.writeFileSync(path.join(rulesDir, 'agentops-context.md'), finalContent)
-  log(`wrote context to ${rulesDir}/agentops-context.md`)
+  log(`wrote context to ~/.claude/rules/agentops-context.md`)
 }
 
 // ─── Hook output ──────────────────────────────────────────────────────────
