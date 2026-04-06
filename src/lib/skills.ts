@@ -146,7 +146,7 @@ export function readSkillFromCommandsDir(name: string): { frontmatter: SkillFron
   const filePath = getSkillFilePath(name)
 
   if (!fs.existsSync(filePath)) {
-    throw new Error(`Skill file not found: ${filePath}\nDid you run: agentops create ${name}`)
+    throw new Error(`Skill file not found: ${filePath}\nDid you run: agentops skills create ${name}`)
   }
 
   const raw = fs.readFileSync(filePath, 'utf-8')

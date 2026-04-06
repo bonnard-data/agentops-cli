@@ -1,13 +1,12 @@
 {
+  "description": "AgentOps sync hook — syncs skills and context on session start",
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/sync.mjs\"",
-            "timeout": 30
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/scripts/sync.mjs"
           }
         ]
       }

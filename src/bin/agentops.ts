@@ -55,7 +55,13 @@ program
     console.log(`Role: ${creds.user.role}`)
   })
 
-program
+// ─── Skills subcommand group ─────────────────────────────────────────────
+
+const skills = program
+  .command('skills')
+  .description('Manage org skills — search, install, create, publish')
+
+skills
   .command('search [query]')
   .description('Search the org skill library')
   .option('--url <url>', 'AgentOps server URL')
@@ -65,45 +71,45 @@ program
   .option('--status <status>', 'Filter by status (admin only)')
   .action(searchCommand)
 
-program
+skills
   .command('install <name>')
   .description('Install a skill from the org library')
   .option('--url <url>', 'AgentOps server URL')
   .action(installCommand)
 
-program
+skills
   .command('uninstall <name>')
   .description('Uninstall a personal skill')
   .option('--url <url>', 'AgentOps server URL')
   .action(uninstallCommand)
 
-program
+skills
   .command('list')
   .description('Show your synced skills (role + personal)')
   .option('--url <url>', 'AgentOps server URL')
   .action(listCommand)
 
-program
+skills
   .command('create [name]')
   .description('Scaffold a new skill locally')
   .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .action(createCommand)
 
-program
+skills
   .command('submit <name>')
   .description('Submit a skill for review')
   .option('--url <url>', 'AgentOps server URL')
   .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .action(submitCommand)
 
-program
+skills
   .command('update <name>')
   .description('Push local skill edits to the server')
   .option('--url <url>', 'AgentOps server URL')
   .action(updateCommand)
 
-program
-  .command('my-skills')
+skills
+  .command('mine')
   .description('Show your authored and installed skills')
   .option('--url <url>', 'AgentOps server URL')
   .action(mySkillsCommand)

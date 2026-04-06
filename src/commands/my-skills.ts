@@ -38,10 +38,10 @@ export async function mySkillsCommand(opts: { url?: string }) {
       console.log(`  ${pc.bold(s.name)} ${colorFn(s.status)}`)
       if (s.status === 'rejected' && s.rejectionComment) {
         console.log(`    ${pc.red('Feedback:')} ${s.rejectionComment}`)
-        console.log(`    ${pc.dim(`Edit and resubmit: agentops update ${s.name} && agentops submit ${s.name}`)}`)
+        console.log(`    ${pc.dim(`Edit and resubmit: agentops skills update ${s.name} && agentops skills submit ${s.name}`)}`)
       }
       if (s.status === 'draft') {
-        console.log(`    ${pc.dim(`Submit: agentops submit ${s.name} --tags <tags>`)}`)
+        console.log(`    ${pc.dim(`Submit: agentops skills submit ${s.name} --tags <tags>`)}`)
       }
     }
     console.log()
@@ -57,7 +57,7 @@ export async function mySkillsCommand(opts: { url?: string }) {
 
   if (data.authored.length === 0 && data.installed.length === 0) {
     console.log(pc.dim('No authored or installed skills.'))
-    console.log(pc.dim('  Browse the library: agentops search'))
-    console.log(pc.dim('  Create a skill: agentops create <name>'))
+    console.log(pc.dim('  Browse the library: agentops skills search'))
+    console.log(pc.dim('  Create a skill: agentops skills create <name>'))
   }
 }

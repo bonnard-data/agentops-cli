@@ -17,7 +17,7 @@ export async function uninstallCommand(name: string, opts: { url?: string }) {
     const err = await res.json() as { error?: { code?: string; message?: string } }
     console.error(pc.red(err.error?.message ?? `Error: ${res.status}`))
     if (err.error?.code === 'not_found') {
-      console.log(pc.dim(`  Check your installed skills: agentops my-skills`))
+      console.log(pc.dim(`  Check your installed skills: agentops skills mine`))
     }
     process.exit(1)
   }

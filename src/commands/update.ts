@@ -33,11 +33,11 @@ export async function updateCommand(name: string, opts: { url?: string }) {
     if (err.error?.code === 'invalid_state') {
       console.log(pc.dim('  Only draft or rejected skills can be updated. Published skills are immutable.'))
     } else if (err.error?.code === 'not_found') {
-      console.log(pc.dim(`  Skill doesn't exist on the server yet. Submit it first: agentops submit ${name}`))
+      console.log(pc.dim(`  Skill doesn't exist on the server yet. Submit it first: agentops skills submit ${name}`))
     }
     process.exit(1)
   }
 
   console.log(pc.green(`✓ Updated "${frontmatter.name}" on the server.`))
-  console.log(pc.dim(`  Resubmit for review: agentops submit ${frontmatter.name}`))
+  console.log(pc.dim(`  Resubmit for review: agentops skills submit ${frontmatter.name}`))
 }

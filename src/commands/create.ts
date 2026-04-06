@@ -47,5 +47,5 @@ Describe the skill's purpose and workflow here.
 
   const tagsHint = opts.tags ? '' : ' --tags engineering,testing'
   console.log(pc.green(`✓ Created ${filePath}`))
-  console.log(pc.dim(`  Ready to use now. Edit it, then share with: agentops submit ${skillName}${tagsHint}`))
+  console.log(pc.dim(`  Ready to use now. Edit it, then share with: agentops skills submit ${skillName}${tagsHint}`))
 }

@@ -54,7 +54,7 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
     const err = await submitRes.json() as { error?: { code?: string; message?: string } }
     console.error(pc.red(err.error?.message ?? `Error submitting: ${submitRes.status}`))
     if (err.error?.code === 'invalid_state') {
-      console.log(pc.dim('  Only draft or rejected skills can be submitted. Check status: agentops my-skills'))
+      console.log(pc.dim('  Only draft or rejected skills can be submitted. Check status: agentops skills mine'))
     }
     process.exit(1)
   }
@@ -64,9 +64,9 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
 
   if (result.autoPublished) {
     console.log(pc.green(`✓ "${frontmatter.name}" published${tagList} — available to your org now.`))
-    console.log(pc.dim(`  Others can install with: agentops install ${frontmatter.name}`))
+    console.log(pc.dim(`  Others can install with: agentops skills install ${frontmatter.name}`))
   } else {
     console.log(pc.green(`✓ "${frontmatter.name}" submitted for review${tagList}.`))
-    console.log(pc.dim(`  Check status: agentops my-skills`))
+    console.log(pc.dim(`  Check status: agentops skills mine`))
   }
 }

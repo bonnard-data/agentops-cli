@@ -18,7 +18,7 @@ export async function installCommand(name: string, opts: { url?: string }) {
     const err = await installRes.json() as { error?: { code?: string; message?: string } }
     console.error(pc.red(err.error?.message ?? `Error: ${installRes.status}`))
     if (err.error?.code === 'not_found') {
-      console.log(pc.dim(`  Search the library: agentops search ${name}`))
+      console.log(pc.dim(`  Search the library: agentops skills search ${name}`))
     } else if (err.error?.code === 'invalid_state') {
       console.log(pc.dim('  Only published skills can be installed. Check with the author or an admin.'))
     }
@@ -40,5 +40,5 @@ export async function installCommand(name: string, opts: { url?: string }) {
 
   console.log(pc.green(`✓ Installed "${name}" — ready to use now.`))
   console.log(pc.dim(`  File: ${filePath}`))
-  console.log(pc.dim(`  Uninstall: agentops uninstall ${name}`))
+  console.log(pc.dim(`  Uninstall: agentops skills uninstall ${name}`))
 }

@@ -80,7 +80,7 @@ export async function searchCommand(query: string | undefined, opts: {
   if (data.items.length === 0) {
     console.log(pc.dim('No skills found.'))
     if (query) {
-      console.log(pc.dim(`  Try: agentops search (browse all) or agentops search --tags (see categories)`))
+      console.log(pc.dim(`  Try: agentops skills search (browse all) or agentops skills search --tags (see categories)`))
     }
     return
   }
@@ -92,6 +92,6 @@ export async function searchCommand(query: string | undefined, opts: {
     const author = skill.author ? pc.dim(` by ${skill.author}`) : ''
     console.log(`  ${pc.bold(skill.name)}${tags}${author}`)
     console.log(`  ${pc.dim(skill.description)}`)
-    console.log(`  ${pc.dim(`Install: agentops install ${skill.name}`)}\n`)
+    console.log(`  ${pc.dim(`Install: agentops skills install ${skill.name}`)}\n`)
   }
 }
