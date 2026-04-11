@@ -1,7 +1,8 @@
 import pc from 'picocolors'
-import { put, getBaseUrl } from '../lib/api.js'
+import { uploadSkill, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
-import { readSkillFromCommandsDir } from '../lib/skills.js'
+import { findAndReadSkill } from '../lib/skills.js'
+import { packSkill } from '../lib/pack.js'
 
 export async function updateCommand(name: string, opts: { url?: string }) {
   const creds = loadCredentials()
@@ -10,22 +11,37 @@ export async function updateCommand(name: string, opts: { url?: string }) {
     process.exit(1)
   }
 
-  let parsed: ReturnType<typeof readSkillFromCommandsDir>
+  let skill: ReturnType<typeof findAndReadSkill>
   try {
-    parsed = readSkillFromCommandsDir(name)
+    skill = findAndReadSkill(name)
   } catch (err) {
     console.error(pc.red((err as Error).message))
     process.exit(1)
   }
 
-  const { frontmatter, content } = parsed
+  const { dir, frontmatter, content } = skill
   const baseUrl = getBaseUrl(opts.url)
 
-  const res = await put(`/api/skills/${encodeURIComponent(frontmatter.name)}`, {
-    description: frontmatter.description,
-    content,
-    tags: frontmatter.tags,
-  }, baseUrl)
+  // Pack the skill folder
+  console.log(pc.dim(`Packing skill "${frontmatter.name}"...`))
+  let tgz: Buffer
+  try {
+    tgz = await packSkill(dir)
+  } catch (err) {
+    console.error(pc.red(`Failed to pack skill: ${(err as Error).message}`))
+    process.exit(1)
+  }
+  console.log(pc.dim(`Bundle: ${(tgz.length / 1024).toFixed(1)} KB`))
+
+  // Upload updated bundle
+  console.log(pc.dim(`Uploading...`))
+  const res = await uploadSkill(
+    `/api/skills/${encodeURIComponent(frontmatter.name)}`,
+    'PUT',
+    { description: frontmatter.description, content, tags: frontmatter.tags },
+    tgz,
+    baseUrl,
+  )
 
   if (!res.ok) {
     const err = await res.json() as { error?: { code?: string; message?: string } }

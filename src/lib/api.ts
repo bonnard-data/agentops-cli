@@ -68,6 +68,49 @@ export async function del(path: string, baseUrl: string): Promise<Response> {
   }, baseUrl)
 }
 
+/**
+ * Upload a skill: multipart form with metadata fields + .tgz bundle.
+ */
+export async function uploadSkill(
+  apiPath: string,
+  method: 'POST' | 'PUT',
+  metadata: { name?: string; description: string; content: string; tags: string[] },
+  tgz: Buffer,
+  baseUrl: string,
+): Promise<Response> {
+  const form = new FormData()
+  if (metadata.name) form.append('name', metadata.name)
+  form.append('description', metadata.description)
+  form.append('content', metadata.content)
+  form.append('tags', JSON.stringify(metadata.tags))
+  form.append('bundle', new Blob([new Uint8Array(tgz)], { type: 'application/gzip' }), 'bundle.tgz')
+
+  // Let fetch set Content-Type with boundary automatically — don't set it manually
+  const headers = getHeaders()
+
+  return fetchWithRefresh(`${baseUrl}${apiPath}`, {
+    method,
+    headers,
+    body: form,
+  }, baseUrl)
+}
+
+/**
+ * Download a skill bundle as a raw Buffer.
+ */
+export async function downloadBundle(apiPath: string, baseUrl: string): Promise<Buffer> {
+  const res = await fetchWithRefresh(`${baseUrl}${apiPath}`, {
+    headers: getHeaders(),
+  }, baseUrl)
+
+  if (!res.ok) {
+    throw new Error(`Download failed: ${res.status}`)
+  }
+
+  const arrayBuf = await res.arrayBuffer()
+  return Buffer.from(arrayBuf)
+}
+
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {}
   const creds = loadCredentials()

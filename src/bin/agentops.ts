@@ -11,6 +11,8 @@ import { createCommand } from '../commands/create.js'
 import { submitCommand } from '../commands/submit.js'
 import { updateCommand } from '../commands/update.js'
 import { mySkillsCommand } from '../commands/my-skills.js'
+import { publishCommand } from '../commands/publish.js'
+import { rejectCommand } from '../commands/reject.js'
 import { loadCredentials, clearCredentials } from '../lib/credentials.js'
 
 const program = new Command()
@@ -29,7 +31,7 @@ program
 program
   .command('setup')
   .description('Configure an editor for AgentOps skill sync')
-  .requiredOption('--editor <editor>', 'Editor to configure (cursor, claude, codex)')
+  .requiredOption('--editor <editor>', 'Editor to configure (claude, cursor, codex, windsurf, copilot, gemini)')
   .option('--url <url>', 'AgentOps server URL')
   .action(setupCommand)
 
@@ -75,6 +77,9 @@ skills
   .command('install <name>')
   .description('Install a skill from the org library')
   .option('--url <url>', 'AgentOps server URL')
+  .option('--user', 'Install to user-level (available in all projects)')
+  .option('--project', 'Install to project-level (default)')
+  .option('--force', 'Overwrite existing skill')
   .action(installCommand)
 
 skills
@@ -93,6 +98,8 @@ skills
   .command('create [name]')
   .description('Scaffold a new skill locally')
   .option('--tags <tags>', 'Tags for discovery (comma-separated)')
+  .option('--user', 'Create at user-level (available in all projects)')
+  .option('--project', 'Create at project-level (default)')
   .action(createCommand)
 
 skills
@@ -113,5 +120,18 @@ skills
   .description('Show your authored and installed skills')
   .option('--url <url>', 'AgentOps server URL')
   .action(mySkillsCommand)
+
+skills
+  .command('publish <name>')
+  .description('Publish a submitted skill (admin only)')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(publishCommand)
+
+skills
+  .command('reject <name>')
+  .description('Reject a submitted skill (admin only)')
+  .requiredOption('--comment <comment>', 'Reason for rejection')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(rejectCommand)
 
 program.parse()

@@ -1,7 +1,7 @@
 import pc from 'picocolors'
 import { del, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
-import { deleteSkillFile } from '../lib/skills.js'
+import { deleteSkill } from '../lib/skills.js'
 
 export async function uninstallCommand(name: string, opts: { url?: string }) {
   const creds = loadCredentials()
@@ -22,8 +22,8 @@ export async function uninstallCommand(name: string, opts: { url?: string }) {
     process.exit(1)
   }
 
-  // Remove file from disk immediately
-  deleteSkillFile(name)
+  // Remove folder from disk immediately
+  deleteSkill(name)
 
   console.log(pc.green(`✓ Uninstalled "${name}". It won't sync on future sessions.`))
 }

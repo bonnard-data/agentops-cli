@@ -5,7 +5,9 @@
   "bin": {
     "agentops": "./dist/bin/agentops.mjs"
   },
-  "files": ["dist", "scripts", "hooks", ".claude-plugin", ".cursor-plugin"],
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/bonnard-data/agentops-cli"
@@ -22,15 +24,18 @@
   "dependencies": {
     "commander": "14.0.3",
     "open": "11.0.0",
-    "picocolors": "1.1.1"
+    "picocolors": "1.1.1",
+    "tar": "7.5.13"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "22.19.17",
+    "@types/tar": "^7.0.87",
     "eslint": "10.2.0",
     "tsdown": "0.21.7",
     "tsx": "4.21.0",
     "typescript": "6.0.2",
-    "typescript-eslint": "8.58.0"
+    "typescript-eslint": "8.58.0",
+    "vitest": "^4.1.4"
   }
 }

@@ -10,7 +10,7 @@ export async function listCommand(opts: { url?: string }) {
   }
 
   const baseUrl = getBaseUrl(opts.url)
-  const res = await get('/api/sync', baseUrl)
+  const res = await get('/api/user/skills/list', baseUrl)
 
   if (!res.ok) {
     const err = await res.json() as { error?: { message?: string } }
@@ -20,31 +20,33 @@ export async function listCommand(opts: { url?: string }) {
 
   const data = await res.json() as {
     roles: string[]
-    skills: Array<{ name: string; description: string; source: string; version: number }>
+    skills: Array<{ name: string; description: string; source: string }>
   }
 
   if (data.skills.length === 0) {
     console.log(pc.dim('No skills synced yet.'))
+    console.log(pc.dim('  Browse: agentops skills search'))
+    console.log(pc.dim('  Create: agentops skills create <name>'))
     return
   }
 
-  console.log(pc.bold(`Your synced skills (${data.skills.length}):\n`))
+  console.log(pc.bold(`Your skills (${data.skills.length}):\n`))
 
-  const orgSkills = data.skills.filter((s) => s.source === 'org')
-  const userSkills = data.skills.filter((s) => s.source === 'user')
+  const roleSkills = data.skills.filter((s) => s.source === 'role')
+  const personalSkills = data.skills.filter((s) => s.source === 'personal')
 
-  if (orgSkills.length > 0) {
+  if (roleSkills.length > 0) {
     console.log(pc.dim(`  Role-assigned (${data.roles.join(', ')}):`))
-    for (const s of orgSkills) {
-      console.log(`    ${pc.bold(s.name)} ${pc.dim(`v${s.version}`)} — ${s.description}`)
+    for (const s of roleSkills) {
+      console.log(`    ${pc.bold(s.name)} — ${s.description}`)
     }
     console.log()
   }
 
-  if (userSkills.length > 0) {
+  if (personalSkills.length > 0) {
     console.log(pc.dim('  Personally installed:'))
-    for (const s of userSkills) {
-      console.log(`    ${pc.bold(s.name)} ${pc.dim(`v${s.version}`)} — ${s.description}`)
+    for (const s of personalSkills) {
+      console.log(`    ${pc.bold(s.name)} — ${s.description}`)
     }
     console.log()
   }

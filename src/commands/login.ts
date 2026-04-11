@@ -3,7 +3,7 @@ import http from 'node:http'
 import pc from 'picocolors'
 import open from 'open'
 import { getBaseUrl, post } from '../lib/api.js'
-import { saveCredentials, saveConfig, validateCredentials } from '../lib/credentials.js'
+import { saveCredentials, saveConfig, loadConfig, validateCredentials } from '../lib/credentials.js'
 
 const CALLBACK_HOST = '127.0.0.1'
 
@@ -66,7 +66,7 @@ export async function loginCommand(options: { url?: string }) {
 
     // 4. Save credentials and config
     saveCredentials(creds)
-    saveConfig({ url: baseUrl })
+    saveConfig({ ...loadConfig(), url: baseUrl })
 
     console.log()
     console.log(pc.green('✓ Logged in successfully'))

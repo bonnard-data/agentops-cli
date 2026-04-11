@@ -23,7 +23,8 @@ export interface Credentials {
 }
 
 export interface Config {
-  url: string
+  url?: string
+  editor?: string
 }
 
 function ensureDir() {
