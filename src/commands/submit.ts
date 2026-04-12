@@ -3,6 +3,8 @@ import { uploadSkill, put, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
 import { findAndReadSkill } from '../lib/skills.js'
 import { packSkill } from '../lib/pack.js'
+import { validateSkill } from '../lib/validate.js'
+import { printIssues } from './check.js'
 
 export async function submitCommand(name: string, opts: { url?: string; tags?: string }) {
   const creds = loadCredentials()
@@ -21,6 +23,19 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
 
   const { dir, frontmatter, content } = skill
   const baseUrl = getBaseUrl(opts.url)
+
+  // Run validation
+  const check = validateSkill(dir)
+  if (check.errors.length > 0) {
+    printIssues(check.errors, pc.red, 'ERROR')
+    console.error(pc.red(`\n${check.errors.length} error(s) must be fixed before submitting`))
+    console.log(pc.dim(`  Re-check: agentops skills check ${name}`))
+    process.exit(1)
+  }
+  if (check.warnings.length > 0) {
+    printIssues(check.warnings, pc.yellow, 'WARNING')
+    console.log(pc.yellow(`${check.warnings.length} warning(s) — submitting anyway\n`))
+  }
 
   const tags = opts.tags
     ? opts.tags.split(',').map((t) => t.trim()).filter(Boolean)
@@ -53,6 +68,13 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
       console.error(pc.red(`Skill "${frontmatter.name}" already exists on the server.`))
       console.log(pc.dim(`  To update it: agentops skills update ${name}`))
       console.log(pc.dim(`  Then resubmit: agentops skills submit ${name}`))
+      process.exit(1)
+    }
+    if (err.error?.code === 'feature_gated') {
+      console.error(pc.red(err.error?.message ?? 'Plan limit exceeded'))
+      console.log(pc.dim(`  Reduce your bundle size, or upgrade your plan:`))
+      console.log(pc.dim(`    agentops whoami              — check your current plan`))
+      console.log(pc.dim(`    https://agentops.bonnard.ai  — manage your subscription`))
       process.exit(1)
     }
     console.error(pc.red(err.error?.message ?? `Error creating skill: ${createRes.status}`))

@@ -50,6 +50,10 @@ export async function updateCommand(name: string, opts: { url?: string }) {
       console.log(pc.dim('  Only draft or rejected skills can be updated. Published skills are immutable.'))
     } else if (err.error?.code === 'not_found') {
       console.log(pc.dim(`  Skill doesn't exist on the server yet. Submit it first: agentops skills submit ${name}`))
+    } else if (err.error?.code === 'feature_gated') {
+      console.log(pc.dim(`  Reduce your bundle size, or upgrade your plan:`))
+      console.log(pc.dim(`    agentops whoami              — check your current plan`))
+      console.log(pc.dim(`    https://agentops.bonnard.ai  — manage your subscription`))
     }
     process.exit(1)
   }

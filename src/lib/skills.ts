@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
+import YAML from 'yaml'
 import { loadConfig } from './credentials.js'
 
 const HOME = os.homedir()
@@ -96,23 +97,21 @@ export function getSkillDir(name: string, opts: { user?: boolean }): string {
  * Returns the first found path, or null.
  */
 export function findSkillDir(name: string): string | null {
+  return getSkillSearchPaths(name).find((p) => fs.existsSync(path.join(p, 'SKILL.md'))) ?? null
+}
+
+/**
+ * Get the list of paths where findSkillDir would look for a skill.
+ * Used for error messages so users see exactly where we searched.
+ */
+export function getSkillSearchPaths(name: string): string[] {
   const editor = getEditor()
   const { skills } = getEditorPaths(editor)
-
-  // Check project level
   const root = findProjectRoot(editor)
-  const projectDir = path.join(root, skills, name)
-  if (fs.existsSync(path.join(projectDir, 'SKILL.md'))) {
-    return projectDir
-  }
-
-  // Check user level
-  const userDir = path.join(HOME, skills, name)
-  if (fs.existsSync(path.join(userDir, 'SKILL.md'))) {
-    return userDir
-  }
-
-  return null
+  return [
+    path.join(root, skills, name),
+    path.join(HOME, skills, name),
+  ]
 }
 
 // ─── Write / delete skills ───────────────────────────────────────────────
@@ -174,41 +173,48 @@ export interface SkillFrontmatter {
 
 /**
  * Parse a SKILL.md file into frontmatter and content.
+ * Uses a real YAML parser — handles block scalars, quoted strings, nested values.
  */
 export function parseSkillMd(raw: string, nameFromDir?: string): { frontmatter: SkillFrontmatter; content: string } {
-  const match = raw.match(/^---\n([\s\S]*?)\n---\n\n?([\s\S]*)$/)
+  const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
   if (!match) {
     throw new Error('SKILL.md must start with --- frontmatter ---')
   }
 
   const [, fmBlock, content] = match
-  const fm: Record<string, string> = {}
 
-  for (const line of fmBlock!.split('\n')) {
-    const colonIdx = line.indexOf(':')
-    if (colonIdx === -1) continue
-    const key = line.slice(0, colonIdx).trim()
-    const value = line.slice(colonIdx + 1).trim()
-    fm[key] = value
+  let fm: Record<string, unknown>
+  try {
+    fm = YAML.parse(fmBlock!) as Record<string, unknown>
+  } catch (err) {
+    throw new Error(`Invalid YAML frontmatter: ${(err as Error).message}`, { cause: err })
   }
 
-  const name = fm.name || nameFromDir
-  const description = fm.description
-  if (!name || !description) {
-    throw new Error('Frontmatter must include "name" and "description"')
+  if (!fm || typeof fm !== 'object') {
+    throw new Error('Frontmatter must be a YAML object')
   }
 
+  const name = typeof fm.name === 'string' && fm.name.trim() ? fm.name.trim() : nameFromDir
+  const description = typeof fm.description === 'string' ? fm.description.trim() : ''
+
+  if (!name) {
+    throw new Error('Frontmatter must include "name"')
+  }
+  if (!description) {
+    throw new Error('Frontmatter must include "description"')
+  }
+
+  // Tags can be a YAML array or comma-separated string
   let tags: string[] = []
-  if (fm.tags) {
-    const tagsStr = fm.tags.replace(/^\[/, '').replace(/\]$/, '').trim()
-    if (tagsStr) {
-      tags = tagsStr.split(',').map((t) => t.trim()).filter(Boolean)
-    }
+  if (Array.isArray(fm.tags)) {
+    tags = fm.tags.filter((t): t is string => typeof t === 'string').map((t) => t.trim()).filter(Boolean)
+  } else if (typeof fm.tags === 'string') {
+    tags = fm.tags.split(',').map((t) => t.trim()).filter(Boolean)
   }
 
   return {
     frontmatter: { name, description, tags },
-    content: content!.trim(),
+    content: (content ?? '').trim(),
   }
 }
 
@@ -233,7 +239,12 @@ export function readSkillMd(skillDir: string): { frontmatter: SkillFrontmatter; 
 export function findAndReadSkill(name: string): { dir: string; frontmatter: SkillFrontmatter; content: string } {
   const dir = findSkillDir(name)
   if (!dir) {
-    throw new Error(`Skill "${name}" not found.\nSearched project and user skill directories.\nDid you run: agentops skills create ${name}`)
+    const searched = getSkillSearchPaths(name).map((p) => `  - ${p}/SKILL.md`).join('\n')
+    throw new Error(
+      `Skill "${name}" not found. Searched:\n${searched}\n\n` +
+      `Skills must live in one of those paths so your editor can discover them.\n` +
+      `Create a new skill with: agentops skills create ${name}`,
+    )
   }
   const { frontmatter, content } = readSkillMd(dir)
   return { dir, frontmatter, content }

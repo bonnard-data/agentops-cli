@@ -13,7 +13,9 @@ import { updateCommand } from '../commands/update.js'
 import { mySkillsCommand } from '../commands/my-skills.js'
 import { publishCommand } from '../commands/publish.js'
 import { rejectCommand } from '../commands/reject.js'
-import { loadCredentials, clearCredentials } from '../lib/credentials.js'
+import { checkCommand } from '../commands/check.js'
+import { whoamiCommand } from '../commands/whoami.js'
+import { clearCredentials } from '../lib/credentials.js'
 
 const program = new Command()
 
@@ -45,17 +47,9 @@ program
 
 program
   .command('whoami')
-  .description('Show current logged-in user')
-  .action(() => {
-    const creds = loadCredentials()
-    if (!creds) {
-      console.log(pc.yellow('Not logged in. Run: agentops login'))
-      process.exit(1)
-      return
-    }
-    console.log(`${pc.bold(creds.user.email)} (${creds.org.name})`)
-    console.log(`Role: ${creds.user.role}`)
-  })
+  .description('Show current user, plan, and usage')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(whoamiCommand)
 
 // ─── Skills subcommand group ─────────────────────────────────────────────
 
@@ -101,6 +95,11 @@ skills
   .option('--user', 'Create at user-level (available in all projects)')
   .option('--project', 'Create at project-level (default)')
   .action(createCommand)
+
+skills
+  .command('check <name>')
+  .description('Check a local skill for issues before submitting')
+  .action(checkCommand)
 
 skills
   .command('submit <name>')

@@ -25,5 +25,5 @@ export async function uninstallCommand(name: string, opts: { url?: string }) {
   // Remove folder from disk immediately
   deleteSkill(name)
 
-  console.log(pc.green(`✓ Uninstalled "${name}". It won't sync on future sessions.`))
+  console.log(pc.green(`✓ Uninstalled "${name}". Removed from your active skills.`))
 }
