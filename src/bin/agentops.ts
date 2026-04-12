@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createRequire } from 'node:module'
 import { Command } from 'commander'
 import pc from 'picocolors'
 import { loginCommand } from '../commands/login.js'
@@ -17,12 +18,17 @@ import { checkCommand } from '../commands/check.js'
 import { whoamiCommand } from '../commands/whoami.js'
 import { clearCredentials } from '../lib/credentials.js'
 
+// Read version from package.json at runtime.
+// The published layout is: package.json at the npm package root, dist/bin/agentops.mjs one level deep.
+const require = createRequire(import.meta.url)
+const pkg = require('../../package.json') as { version: string }
+
 const program = new Command()
 
 program
   .name('agentops')
   .description('AgentOps CLI — setup and manage your AI agent skills')
-  .version('0.1.0')
+  .version(pkg.version)
 
 program
   .command('login')
