@@ -1,6 +1,6 @@
 {
   "name": "@bonnard/agentops",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "type": "module",
   "bin": {
     "agentops": "./dist/bin/agentops.mjs"
