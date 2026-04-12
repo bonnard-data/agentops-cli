@@ -16,6 +16,7 @@ import { rejectCommand } from '../commands/reject.js'
 import { checkCommand } from '../commands/check.js'
 import { whoamiCommand } from '../commands/whoami.js'
 import { historyCommand } from '../commands/history.js'
+import { deleteCommand } from '../commands/delete.js'
 import { clearCredentials } from '../lib/credentials.js'
 
 // Read version from package.json at runtime.
@@ -138,5 +139,12 @@ skills
   .requiredOption('--comment <comment>', 'Reason for rejection')
   .option('--url <url>', 'AgentOps server URL')
   .action(rejectCommand)
+
+skills
+  .command('delete <name>')
+  .description('Permanently delete a skill and all its versions (admin only)')
+  .option('--force', 'Confirm the deletion')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(deleteCommand)
 
 program.parse()
