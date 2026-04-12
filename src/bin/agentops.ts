@@ -10,12 +10,12 @@ import { uninstallCommand } from '../commands/uninstall.js'
 import { listCommand } from '../commands/list.js'
 import { createCommand } from '../commands/create.js'
 import { submitCommand } from '../commands/submit.js'
-import { updateCommand } from '../commands/update.js'
 import { mySkillsCommand } from '../commands/my-skills.js'
 import { publishCommand } from '../commands/publish.js'
 import { rejectCommand } from '../commands/reject.js'
 import { checkCommand } from '../commands/check.js'
 import { whoamiCommand } from '../commands/whoami.js'
+import { historyCommand } from '../commands/history.js'
 import { clearCredentials } from '../lib/credentials.js'
 
 // Read version from package.json at runtime.
@@ -74,8 +74,8 @@ skills
   .action(searchCommand)
 
 skills
-  .command('install <name>')
-  .description('Install a skill from the org library')
+  .command('install <spec>')
+  .description('Install a skill — use <name> for latest or <name>@v2 to pin a version')
   .option('--url <url>', 'AgentOps server URL')
   .option('--user', 'Install to user-level (available in all projects)')
   .option('--project', 'Install to project-level (default)')
@@ -109,16 +109,16 @@ skills
 
 skills
   .command('submit <name>')
-  .description('Submit a skill for review')
+  .description('Publish a skill — creates a new version each time')
   .option('--url <url>', 'AgentOps server URL')
   .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .action(submitCommand)
 
 skills
-  .command('update <name>')
-  .description('Push local skill edits to the server')
+  .command('history <name>')
+  .description('Show version history for a skill')
   .option('--url <url>', 'AgentOps server URL')
-  .action(updateCommand)
+  .action(historyCommand)
 
 skills
   .command('mine')

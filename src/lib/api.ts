@@ -99,6 +99,17 @@ export async function uploadSkill(
  * Download a skill bundle as a raw Buffer.
  */
 export async function downloadBundle(apiPath: string, baseUrl: string): Promise<Buffer> {
+  const { buffer } = await downloadBundleWithMeta(apiPath, baseUrl)
+  return buffer
+}
+
+/**
+ * Download a skill bundle with metadata headers (version, etc.).
+ */
+export async function downloadBundleWithMeta(
+  apiPath: string,
+  baseUrl: string,
+): Promise<{ buffer: Buffer; version: number | null }> {
   const res = await fetchWithRefresh(`${baseUrl}${apiPath}`, {
     headers: getHeaders(),
   }, baseUrl)
@@ -108,7 +119,9 @@ export async function downloadBundle(apiPath: string, baseUrl: string): Promise<
   }
 
   const arrayBuf = await res.arrayBuffer()
-  return Buffer.from(arrayBuf)
+  const versionHeader = res.headers.get('x-skill-version')
+  const version = versionHeader ? Number(versionHeader) : null
+  return { buffer: Buffer.from(arrayBuf), version: Number.isFinite(version) ? version : null }
 }
 
 function getHeaders(): Record<string, string> {

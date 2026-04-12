@@ -1,10 +1,17 @@
 import pc from 'picocolors'
-import { uploadSkill, put, getBaseUrl } from '../lib/api.js'
+import { uploadSkill, put, get, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
 import { findAndReadSkill } from '../lib/skills.js'
 import { packSkill } from '../lib/pack.js'
 import { validateSkill } from '../lib/validate.js'
 import { printIssues } from './check.js'
+
+interface ServerSkill {
+  name: string
+  status: 'draft' | 'submitted' | 'published' | 'rejected' | 'archived'
+  latestVersion: number
+  hasDraft: boolean
+}
 
 export async function submitCommand(name: string, opts: { url?: string; tags?: string }) {
   const creds = loadCredentials()
@@ -52,24 +59,36 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
   }
   console.log(pc.dim(`Bundle: ${(tgz.length / 1024).toFixed(1)} KB`))
 
-  // Create the skill as a draft with the bundle
-  console.log(pc.dim(`Uploading...`))
-  const createRes = await uploadSkill(
-    '/api/skills',
-    'POST',
+  // Check if skill already exists on server (so we know whether to POST or PUT)
+  const existingRes = await get(`/api/skills/${encodeURIComponent(frontmatter.name)}`, baseUrl)
+  const existing: ServerSkill | null = existingRes.ok ? await existingRes.json() as ServerSkill : null
+
+  // If submitted and awaiting review, block
+  if (existing?.status === 'submitted') {
+    console.error(pc.red(`"${frontmatter.name}" is already submitted for review.`))
+    console.log(pc.dim('  Wait for an admin to approve or reject, then you can edit again.'))
+    console.log(pc.dim('  Check status: agentops skills mine'))
+    process.exit(1)
+  }
+
+  // Upload the bundle via POST (new) or PUT (update existing)
+  const isNew = !existing
+  const uploadPath = isNew
+    ? '/api/skills'
+    : `/api/skills/${encodeURIComponent(frontmatter.name)}`
+  const uploadMethod: 'POST' | 'PUT' = isNew ? 'POST' : 'PUT'
+
+  console.log(pc.dim(isNew ? 'Uploading...' : 'Updating draft...'))
+  const uploadRes = await uploadSkill(
+    uploadPath,
+    uploadMethod,
     { name: frontmatter.name, description: frontmatter.description, content, tags },
     tgz,
     baseUrl,
   )
 
-  if (!createRes.ok) {
-    const err = await createRes.json() as { error?: { code?: string; message?: string } }
-    if (err.error?.code === 'conflict') {
-      console.error(pc.red(`Skill "${frontmatter.name}" already exists on the server.`))
-      console.log(pc.dim(`  To update it: agentops skills update ${name}`))
-      console.log(pc.dim(`  Then resubmit: agentops skills submit ${name}`))
-      process.exit(1)
-    }
+  if (!uploadRes.ok) {
+    const err = await uploadRes.json() as { error?: { code?: string; message?: string } }
     if (err.error?.code === 'feature_gated') {
       console.error(pc.red(err.error?.message ?? 'Plan limit exceeded'))
       console.log(pc.dim(`  Reduce your bundle size, or upgrade your plan:`))
@@ -77,13 +96,11 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
       console.log(pc.dim(`    https://agentops.bonnard.ai  — manage your subscription`))
       process.exit(1)
     }
-    console.error(pc.red(err.error?.message ?? `Error creating skill: ${createRes.status}`))
+    console.error(pc.red(err.error?.message ?? `Error uploading: ${uploadRes.status}`))
     process.exit(1)
   }
 
-  console.log(pc.dim('Draft created.'))
-
-  // Submit for review (or auto-publish)
+  // Submit the draft for review (or auto-publish)
   const submitRes = await put(`/api/skills/${encodeURIComponent(frontmatter.name)}/submit`, {}, baseUrl)
 
   if (!submitRes.ok) {
@@ -92,14 +109,26 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
     process.exit(1)
   }
 
-  const result = await submitRes.json() as { status: string; autoPublished?: boolean }
+  const result = await submitRes.json() as { status: string; autoPublished?: boolean; version?: number; latestVersion?: number }
   const tagList = tags.length > 0 ? ` [${tags.join(', ')}]` : ''
 
+  // Resolve the new version number (v1 on first publish, v2/v3/... on updates)
+  const newVersion = result.version ?? result.latestVersion
+
   if (result.autoPublished) {
-    console.log(pc.green(`✓ "${frontmatter.name}" published${tagList}`))
+    if (existing && existing.latestVersion > 0) {
+      console.log(pc.green(`✓ "${frontmatter.name}" published v${newVersion} (previous: v${existing.latestVersion})${tagList}`))
+    } else {
+      console.log(pc.green(`✓ "${frontmatter.name}" published v${newVersion}${tagList}`))
+    }
     console.log(pc.dim(`  Install: agentops skills install ${frontmatter.name}`))
   } else {
-    console.log(pc.green(`✓ "${frontmatter.name}" submitted for review${tagList}`))
+    if (existing && existing.latestVersion > 0) {
+      console.log(pc.green(`✓ "${frontmatter.name}" submitted for review${tagList}`))
+      console.log(pc.dim(`  Existing v${existing.latestVersion} stays live until the update is approved.`))
+    } else {
+      console.log(pc.green(`✓ "${frontmatter.name}" submitted for review${tagList}`))
+    }
     console.log(pc.dim(`  Check status: agentops skills mine`))
   }
 }
