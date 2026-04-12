@@ -62,7 +62,7 @@ program
 
 const skills = program
   .command('skills')
-  .description('Manage org skills — search, install, create, publish')
+  .description('Manage org skills — search, install, create, submit, version')
 
 skills
   .command('search [query]')

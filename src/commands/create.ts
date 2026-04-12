@@ -21,7 +21,8 @@ export async function createCommand(name: string | undefined, opts: { tags?: str
     process.exit(1)
   }
   if (fs.existsSync(`${targetDir}/SKILL.md`)) {
-    console.error(pc.red(`Skill already exists: ${targetDir}`))
+    console.error(pc.red(`Skill "${skillName}" already exists at ${targetDir}`))
+    console.log(pc.dim('  Edit the existing skill, or pick a different name.'))
     process.exit(1)
   }
 
