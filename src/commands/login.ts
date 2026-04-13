@@ -14,8 +14,8 @@ import {
 
 const CALLBACK_HOST = '127.0.0.1'
 
-export async function loginCommand(options: { url?: string }) {
-  const baseUrl = getBaseUrl(options.url)
+export async function loginCommand() {
+  const baseUrl = getBaseUrl()
 
   console.log(pc.dim(`Server: ${baseUrl}`))
 

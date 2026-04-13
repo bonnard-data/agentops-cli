@@ -13,7 +13,7 @@ interface ServerSkill {
   hasDraft: boolean
 }
 
-export async function submitCommand(name: string, opts: { url?: string; tags?: string }) {
+export async function submitCommand(name: string, opts: { tags?: string }) {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
@@ -29,7 +29,7 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
   }
 
   const { dir, frontmatter, content } = skill
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
 
   // Run validation
   const check = validateSkill(dir)
@@ -67,7 +67,7 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
   if (existing?.status === 'submitted') {
     console.error(pc.red(`"${frontmatter.name}" is already submitted for review.`))
     console.log(pc.dim('  Wait for an admin to approve or reject, then you can edit again.'))
-    console.log(pc.dim('  Check status: agentops skills authored'))
+    console.log(pc.dim('  Check status: agentops skills mine'))
     process.exit(1)
   }
 
@@ -129,6 +129,6 @@ export async function submitCommand(name: string, opts: { url?: string; tags?: s
     } else {
       console.log(pc.green(`✓ "${frontmatter.name}" submitted for review${tagList}`))
     }
-    console.log(pc.dim(`  Check status: agentops skills authored`))
+    console.log(pc.dim(`  Check status: agentops skills mine`))
   }
 }

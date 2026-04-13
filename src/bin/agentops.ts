@@ -8,11 +8,11 @@ import { searchCommand } from '../commands/search.js'
 import { installCommand } from '../commands/install.js'
 import { infoCommand } from '../commands/info.js'
 import { uninstallCommand } from '../commands/uninstall.js'
-import { listCommand } from '../commands/list.js'
+import { installedCommand } from '../commands/installed.js'
 import { createCommand } from '../commands/create.js'
 import { submitCommand } from '../commands/submit.js'
-import { authoredCommand } from '../commands/authored.js'
-import { publishCommand } from '../commands/publish.js'
+import { mineCommand } from '../commands/mine.js'
+import { approveCommand } from '../commands/approve.js'
 import { rejectCommand } from '../commands/reject.js'
 import { checkCommand } from '../commands/check.js'
 import { whoamiCommand } from '../commands/whoami.js'
@@ -36,14 +36,12 @@ program
 program
   .command('login')
   .description('Authenticate with AgentOps via your browser')
-  .option('--url <url>', 'AgentOps server URL')
   .action(loginCommand)
 
 program
   .command('setup')
   .description('Configure your editor (claude, cursor, codex, windsurf, copilot, gemini)')
   .requiredOption('--editor <editor>', 'Editor to configure (claude, cursor, codex, windsurf, copilot, gemini)')
-  .option('--url <url>', 'AgentOps server URL')
   .action(setupCommand)
 
 program
@@ -57,7 +55,6 @@ program
 program
   .command('whoami')
   .description('Show current user, plan, and usage')
-  .option('--url <url>', 'AgentOps server URL')
   .action(whoamiCommand)
 
 // ─── Skills subcommand group ─────────────────────────────────────────────
@@ -69,7 +66,6 @@ const skills = program
 skills
   .command('search [query]')
   .description('Search the org skill library')
-  .option('--url <url>', 'AgentOps server URL')
   .option('--tags [tags]', 'List all tags (no value) or filter by tags (comma-separated)')
   .option('--authors', 'List all skill authors')
   .option('--author <name>', 'Filter by author name')
@@ -79,13 +75,11 @@ skills
 skills
   .command('info <spec>')
   .description('Show details for a skill — use <name> for latest or <name>@v1 for a specific version')
-  .option('--url <url>', 'AgentOps server URL')
   .action(infoCommand)
 
 skills
   .command('install <spec>')
   .description('Install a skill — use <name> for latest or <name>@v2 to pin a version')
-  .option('--url <url>', 'AgentOps server URL')
   .option('--user', 'Install to user-level (available in all projects)')
   .option('--project', 'Install to project-level (default)')
   .option('--force', 'Overwrite existing skill')
@@ -94,13 +88,12 @@ skills
 skills
   .command('uninstall <name>')
   .description('Uninstall a personal skill')
-  .option('--url <url>', 'AgentOps server URL')
   .action(uninstallCommand)
 
 skills
-  .command('list')
-  .description('Show installed skills (project + user)')
-  .action(listCommand)
+  .command('installed')
+  .description('Show skills installed locally (project + user scopes)')
+  .action(installedCommand)
 
 skills
   .command('create [name]')
@@ -118,46 +111,39 @@ skills
 skills
   .command('submit <name>')
   .description('Publish a skill — creates a new version each time')
-  .option('--url <url>', 'AgentOps server URL')
   .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .action(submitCommand)
 
 skills
   .command('history <name>')
   .description('Show version history for a skill')
-  .option('--url <url>', 'AgentOps server URL')
   .action(historyCommand)
 
 skills
   .command('rollback <spec>')
   .description('Re-publish an older version as the new latest — use <name>@v<N> (pro+)')
-  .option('--url <url>', 'AgentOps server URL')
   .action(rollbackCommand)
 
 skills
-  .command('authored')
+  .command('mine')
   .description('Show skills you\'ve authored (draft, submitted, published, rejected)')
-  .option('--url <url>', 'AgentOps server URL')
-  .action(authoredCommand)
+  .action(mineCommand)
 
 skills
-  .command('publish <name>')
-  .description('Publish a submitted skill (admin only)')
-  .option('--url <url>', 'AgentOps server URL')
-  .action(publishCommand)
+  .command('approve <name>')
+  .description('Approve a submitted skill — makes it live for the org (admin only)')
+  .action(approveCommand)
 
 skills
   .command('reject <name>')
   .description('Reject a submitted skill (admin only)')
   .requiredOption('--comment <comment>', 'Reason for rejection')
-  .option('--url <url>', 'AgentOps server URL')
   .action(rejectCommand)
 
 skills
   .command('delete <name>')
   .description('Permanently delete a skill and all its versions (admin only)')
   .option('--force', 'Confirm the deletion')
-  .option('--url <url>', 'AgentOps server URL')
   .action(deleteCommand)
 
 program.parse()

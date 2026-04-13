@@ -10,14 +10,14 @@ const STATUS_COLORS: Record<string, (s: string) => string> = {
   archived: pc.dim,
 }
 
-export async function authoredCommand(opts: { url?: string }) {
+export async function mineCommand() {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
   const res = await get('/api/user/skills', baseUrl)
 
   if (!res.ok) {

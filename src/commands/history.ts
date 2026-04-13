@@ -16,14 +16,14 @@ interface HistoryResponse {
   versions: VersionRow[]
 }
 
-export async function historyCommand(name: string, opts: { url?: string }) {
+export async function historyCommand(name: string) {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
   const res = await get(`/api/skills/${encodeURIComponent(name)}/versions`, baseUrl)
 
   if (!res.ok) {

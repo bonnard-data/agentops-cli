@@ -3,7 +3,7 @@ import { loadCredentials, loadConfig, saveConfig } from '../lib/credentials.js'
 
 const SUPPORTED_EDITORS = ['claude', 'cursor', 'codex', 'windsurf', 'copilot', 'gemini'] as const
 
-export async function setupCommand(options: { editor?: string; url?: string }) {
+export async function setupCommand(options: { editor?: string }) {
   const creds = loadCredentials()
   if (!creds) {
     console.error(pc.red('Not logged in. Run: agentops login'))

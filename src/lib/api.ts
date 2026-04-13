@@ -1,7 +1,19 @@
 import { loadCredentials, saveCredentials, loadConfig } from './credentials.js'
 
-export function getBaseUrl(urlOverride?: string): string {
-  if (urlOverride) return urlOverride.replace(/\/$/, '')
+/**
+ * Resolve the AgentOps server URL.
+ *
+ * Precedence:
+ *   1. AGENTOPS_API_URL env var — dev-only override. Set this when you want
+ *      the CLI to talk to a local server (http://localhost:3000) or a staging
+ *      environment. Takes precedence over saved credentials so an accidentally
+ *      persisted dev URL can be overridden by setting or unsetting the env var.
+ *   2. Saved config (from the last successful login)
+ *   3. Production default
+ */
+export function getBaseUrl(): string {
+  const envUrl = process.env.AGENTOPS_API_URL
+  if (envUrl) return envUrl.replace(/\/$/, '')
   const config = loadConfig()
   if (config?.url) return config.url.replace(/\/$/, '')
   return 'https://agentops.bonnard.ai'

@@ -2,7 +2,7 @@ import pc from 'picocolors'
 import { del, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
 
-export async function deleteCommand(name: string, opts: { url?: string; force?: boolean }) {
+export async function deleteCommand(name: string, opts: { force?: boolean }) {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
@@ -22,7 +22,7 @@ export async function deleteCommand(name: string, opts: { url?: string; force?: 
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
   const res = await del(`/api/skills/${encodeURIComponent(name)}`, baseUrl)
 
   if (!res.ok) {

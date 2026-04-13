@@ -2,7 +2,7 @@ import pc from 'picocolors'
 import { put, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
 
-export async function rejectCommand(name: string, opts: { url?: string; comment?: string }) {
+export async function rejectCommand(name: string, opts: { comment?: string }) {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
@@ -20,7 +20,7 @@ export async function rejectCommand(name: string, opts: { url?: string; comment?
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
   const res = await put(`/api/skills/${encodeURIComponent(name)}/reject`, { comment: opts.comment }, baseUrl)
 
   if (!res.ok) {

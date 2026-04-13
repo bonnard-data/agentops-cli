@@ -17,14 +17,14 @@ interface MeResponse {
   isPlatformAdmin: boolean
 }
 
-export async function whoamiCommand(opts: { url?: string }) {
+export async function whoamiCommand() {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
   const res = await get('/api/me', baseUrl)
 
   // If server call fails, fall back to cached credentials

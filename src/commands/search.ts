@@ -3,7 +3,6 @@ import { get, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
 
 export async function searchCommand(query: string | undefined, opts: {
-  url?: string
   tags?: string | true
   authors?: true
   author?: string
@@ -15,7 +14,7 @@ export async function searchCommand(query: string | undefined, opts: {
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
 
   // ── List tags mode ─────────────────────────────────────────────────────
 

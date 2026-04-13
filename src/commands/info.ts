@@ -34,7 +34,7 @@ interface VersionRow {
   publishedAt: string
 }
 
-export async function infoCommand(spec: string, opts: { url?: string }) {
+export async function infoCommand(spec: string) {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
@@ -49,7 +49,7 @@ export async function infoCommand(spec: string, opts: { url?: string }) {
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
 
   if (typeof parsed.version === 'number') {
     await renderPinnedVersion(parsed.name, parsed.version, baseUrl)

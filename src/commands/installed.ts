@@ -1,7 +1,7 @@
 import pc from 'picocolors'
 import { scanLocalSkills } from '../lib/skills.js'
 
-export async function listCommand() {
+export async function installedCommand() {
   let result
   try {
     result = scanLocalSkills()

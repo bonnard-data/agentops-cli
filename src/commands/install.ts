@@ -8,7 +8,7 @@ import { unpackSkill } from '../lib/pack.js'
 
 export async function installCommand(
   spec: string,
-  opts: { url?: string; user?: boolean; project?: boolean; force?: boolean },
+  opts: { user?: boolean; project?: boolean; force?: boolean },
 ) {
   const creds = loadCredentials()
   if (!creds) {
@@ -25,7 +25,7 @@ export async function installCommand(
   }
 
   const { name, version } = parsed
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
   const scope = { user: opts.user ?? false }
 
   let dir: string

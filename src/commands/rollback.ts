@@ -3,7 +3,7 @@ import { post, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
 import { parseSkillSpec } from '../lib/skills.js'
 
-export async function rollbackCommand(spec: string, opts: { url?: string }) {
+export async function rollbackCommand(spec: string) {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
@@ -24,7 +24,7 @@ export async function rollbackCommand(spec: string, opts: { url?: string }) {
     process.exit(1)
   }
 
-  const baseUrl = getBaseUrl(opts.url)
+  const baseUrl = getBaseUrl()
   console.log(pc.dim(`Rolling back "${parsed.name}" to v${parsed.version}...`))
 
   const res = await post(
