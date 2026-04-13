@@ -39,7 +39,7 @@ program
 
 program
   .command('setup')
-  .description('Configure an editor for AgentOps skill sync')
+  .description('Configure your editor (claude, cursor, codex, windsurf, copilot, gemini)')
   .requiredOption('--editor <editor>', 'Editor to configure (claude, cursor, codex, windsurf, copilot, gemini)')
   .option('--url <url>', 'AgentOps server URL')
   .action(setupCommand)
@@ -91,8 +91,7 @@ skills
 
 skills
   .command('list')
-  .description('Show your synced skills (role + personal)')
-  .option('--url <url>', 'AgentOps server URL')
+  .description('Show installed skills (project + user)')
   .action(listCommand)
 
 skills

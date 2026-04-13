@@ -163,6 +163,74 @@ export function getInstallDir(name: string, opts: { user?: boolean }): string {
   return dir
 }
 
+// ─── Scan installed skills ───────────────────────────────────────────────
+
+export interface InstalledSkill {
+  name: string
+  dir: string
+  scope: 'project' | 'user'
+  description: string
+}
+
+export interface ScanResult {
+  skills: InstalledSkill[]
+  errors: Array<{ dir: string; error: string }>
+}
+
+function scanDirForSkills(root: string, scope: 'project' | 'user'): ScanResult {
+  const result: ScanResult = { skills: [], errors: [] }
+  if (!fs.existsSync(root)) return result
+
+  let entries: string[]
+  try {
+    entries = fs.readdirSync(root)
+  } catch (err) {
+    result.errors.push({ dir: root, error: (err as Error).message })
+    return result
+  }
+
+  for (const entry of entries) {
+    const dir = path.join(root, entry)
+    try {
+      if (!fs.statSync(dir).isDirectory()) continue
+    } catch {
+      continue
+    }
+    if (!fs.existsSync(path.join(dir, 'SKILL.md'))) continue
+
+    try {
+      const { frontmatter } = readSkillMd(dir)
+      result.skills.push({ name: frontmatter.name, dir, scope, description: frontmatter.description })
+    } catch (err) {
+      result.errors.push({ dir, error: (err as Error).message })
+    }
+  }
+
+  return result
+}
+
+/**
+ * Scan the configured editor's project- and user-level skill directories.
+ * Returns every parseable SKILL.md found, alongside any parse errors.
+ */
+export function scanLocalSkills(): ScanResult {
+  const editor = getEditor()
+  const { skills: skillsSubdir } = getEditorPaths(editor)
+  const projectRoot = findProjectRoot(editor)
+
+  const project = scanDirForSkills(path.join(projectRoot, skillsSubdir), 'project')
+  const user = scanDirForSkills(path.join(HOME, skillsSubdir), 'user')
+
+  const combined: InstalledSkill[] = [...project.skills, ...user.skills].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )
+
+  return {
+    skills: combined,
+    errors: [...project.errors, ...user.errors],
+  }
+}
+
 // ─── Frontmatter parsing ─────────────────────────────────────────────────
 
 export interface SkillFrontmatter {
