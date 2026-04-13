@@ -6,6 +6,7 @@ import { loginCommand } from '../commands/login.js'
 import { setupCommand } from '../commands/setup.js'
 import { searchCommand } from '../commands/search.js'
 import { installCommand } from '../commands/install.js'
+import { infoCommand } from '../commands/info.js'
 import { uninstallCommand } from '../commands/uninstall.js'
 import { listCommand } from '../commands/list.js'
 import { createCommand } from '../commands/create.js'
@@ -73,6 +74,12 @@ skills
   .option('--author <name>', 'Filter by author name')
   .option('--status <status>', 'Filter by status (admin only)')
   .action(searchCommand)
+
+skills
+  .command('info <name>')
+  .description('Show details for a skill (description, tags, README, install state)')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(infoCommand)
 
 skills
   .command('install <spec>')
