@@ -22,7 +22,7 @@ export async function publishCommand(name: string, opts: { url?: string }) {
     const err = await res.json() as { error?: { code?: string; message?: string } }
     console.error(pc.red(err.error?.message ?? `Error: ${res.status}`))
     if (err.error?.code === 'invalid_state') {
-      console.log(pc.dim('  Only "submitted" skills can be published. Check status: agentops skills mine'))
+      console.log(pc.dim('  Only "submitted" skills can be published. Check status: agentops skills authored'))
     } else if (err.error?.code === 'not_found') {
       console.log(pc.dim(`  Skill not found. Search: agentops skills search ${name}`))
     }

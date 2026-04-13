@@ -105,7 +105,7 @@ export async function installCommand(
   }
   await unpackSkill(tgz, dir)
 
-  // Write .agentops-version sidecar so list/mine can show "update available" later
+  // Write .agentops-version sidecar so `list` can show "update available" later
   if (downloadedVersion != null) {
     try {
       fs.writeFileSync(path.join(dir, '.agentops-version'), `${downloadedVersion}\n`)

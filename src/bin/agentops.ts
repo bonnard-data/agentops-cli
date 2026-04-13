@@ -10,7 +10,7 @@ import { uninstallCommand } from '../commands/uninstall.js'
 import { listCommand } from '../commands/list.js'
 import { createCommand } from '../commands/create.js'
 import { submitCommand } from '../commands/submit.js'
-import { mySkillsCommand } from '../commands/my-skills.js'
+import { authoredCommand } from '../commands/authored.js'
 import { publishCommand } from '../commands/publish.js'
 import { rejectCommand } from '../commands/reject.js'
 import { checkCommand } from '../commands/check.js'
@@ -121,10 +121,10 @@ skills
   .action(historyCommand)
 
 skills
-  .command('mine')
-  .description('Show your authored and installed skills')
+  .command('authored')
+  .description('Show skills you\'ve authored (draft, submitted, published, rejected)')
   .option('--url <url>', 'AgentOps server URL')
-  .action(mySkillsCommand)
+  .action(authoredCommand)
 
 skills
   .command('publish <name>')
