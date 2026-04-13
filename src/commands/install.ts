@@ -3,30 +3,8 @@ import path from 'node:path'
 import pc from 'picocolors'
 import { post, downloadBundleWithMeta, getBaseUrl } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
-import { getInstallDir } from '../lib/skills.js'
+import { getInstallDir, parseSkillSpec, type SkillSpec } from '../lib/skills.js'
 import { unpackSkill } from '../lib/pack.js'
-
-/**
- * Parse a skill spec like "foo", "foo@v3", or "foo@latest".
- * Returns { name, version } where version is a number, 'latest', or undefined.
- */
-function parseSkillSpec(spec: string): { name: string; version: number | 'latest' | undefined } {
-  const atIdx = spec.indexOf('@')
-  if (atIdx === -1) {
-    return { name: spec, version: undefined }
-  }
-  const name = spec.slice(0, atIdx)
-  const versionStr = spec.slice(atIdx + 1)
-  if (versionStr === 'latest') {
-    return { name, version: 'latest' }
-  }
-  // Strip leading "v" if present (v3 → 3)
-  const num = Number(versionStr.replace(/^v/, ''))
-  if (!Number.isInteger(num) || num < 1) {
-    throw new Error(`Invalid version "${versionStr}". Use @latest, @v1, @v2, etc.`)
-  }
-  return { name, version: num }
-}
 
 export async function installCommand(
   spec: string,
@@ -38,7 +16,7 @@ export async function installCommand(
     process.exit(1)
   }
 
-  let parsed: { name: string; version: number | 'latest' | undefined }
+  let parsed: SkillSpec
   try {
     parsed = parseSkillSpec(spec)
   } catch (err) {

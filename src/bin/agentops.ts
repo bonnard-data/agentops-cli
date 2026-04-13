@@ -76,8 +76,8 @@ skills
   .action(searchCommand)
 
 skills
-  .command('info <name>')
-  .description('Show details for a skill (description, tags, README, install state)')
+  .command('info <spec>')
+  .description('Show details for a skill — use <name> for latest or <name>@v1 for a specific version')
   .option('--url <url>', 'AgentOps server URL')
   .action(infoCommand)
 

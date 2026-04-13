@@ -163,6 +163,34 @@ export function getInstallDir(name: string, opts: { user?: boolean }): string {
   return dir
 }
 
+// ─── Spec parsing ────────────────────────────────────────────────────────
+
+export interface SkillSpec {
+  name: string
+  version: number | 'latest' | undefined
+}
+
+/**
+ * Parse a skill spec like "foo", "foo@v3", or "foo@latest".
+ * Version is a positive integer, 'latest', or undefined (treated as latest).
+ */
+export function parseSkillSpec(spec: string): SkillSpec {
+  const atIdx = spec.indexOf('@')
+  if (atIdx === -1) {
+    return { name: spec, version: undefined }
+  }
+  const name = spec.slice(0, atIdx)
+  const versionStr = spec.slice(atIdx + 1)
+  if (versionStr === 'latest') {
+    return { name, version: 'latest' }
+  }
+  const num = Number(versionStr.replace(/^v/, ''))
+  if (!Number.isInteger(num) || num < 1) {
+    throw new Error(`Invalid version "${versionStr}". Use @latest, @v1, @v2, etc.`)
+  }
+  return { name, version: num }
+}
+
 // ─── Scan installed skills ───────────────────────────────────────────────
 
 export interface InstalledSkill {

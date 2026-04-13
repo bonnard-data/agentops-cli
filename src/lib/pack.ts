@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { Pack } from 'tar'
 import * as tar from 'tar'
@@ -60,6 +61,25 @@ export async function unpackSkill(tgz: Buffer, targetDir: string): Promise<void>
     extract.on('error', (err: Error) => reject(err))
     extract.end(tgz)
   })
+}
+
+/**
+ * Unpack a .tgz Buffer into a temp directory, read SKILL.md, clean up.
+ * Returns the raw SKILL.md contents. Used for reading an immutable version's
+ * README without persisting it to the user's skills dir.
+ */
+export async function readSkillMdFromBundle(tgz: Buffer): Promise<string> {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentops-info-'))
+  try {
+    await unpackSkill(tgz, tempDir)
+    const mdPath = path.join(tempDir, 'SKILL.md')
+    if (!fs.existsSync(mdPath)) {
+      throw new Error('SKILL.md not found in bundle')
+    }
+    return fs.readFileSync(mdPath, 'utf-8')
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  }
 }
 
 /**

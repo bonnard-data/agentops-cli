@@ -11,6 +11,7 @@ export async function rejectCommand(name: string, opts: { url?: string; comment?
 
   if (creds.user.role !== 'admin') {
     console.error(pc.red('Only admins can reject skills.'))
+    console.log(pc.dim(`  Ask an admin to run: agentops skills reject ${name} --comment "..."`))
     process.exit(1)
   }
 
