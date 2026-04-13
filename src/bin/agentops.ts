@@ -17,6 +17,7 @@ import { rejectCommand } from '../commands/reject.js'
 import { checkCommand } from '../commands/check.js'
 import { whoamiCommand } from '../commands/whoami.js'
 import { historyCommand } from '../commands/history.js'
+import { rollbackCommand } from '../commands/rollback.js'
 import { deleteCommand } from '../commands/delete.js'
 import { clearCredentials } from '../lib/credentials.js'
 
@@ -126,6 +127,12 @@ skills
   .description('Show version history for a skill')
   .option('--url <url>', 'AgentOps server URL')
   .action(historyCommand)
+
+skills
+  .command('rollback <spec>')
+  .description('Re-publish an older version as the new latest — use <name>@v<N> (pro+)')
+  .option('--url <url>', 'AgentOps server URL')
+  .action(rollbackCommand)
 
 skills
   .command('authored')
