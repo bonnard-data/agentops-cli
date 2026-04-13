@@ -103,6 +103,16 @@ export async function downloadBundle(apiPath: string, baseUrl: string): Promise<
   return buffer
 }
 
+export class ApiError extends Error {
+  status: number
+  code?: string
+  constructor(message: string, status: number, code?: string) {
+    super(message)
+    this.status = status
+    this.code = code
+  }
+}
+
 /**
  * Download a skill bundle with metadata headers (version, etc.).
  */
@@ -115,7 +125,14 @@ export async function downloadBundleWithMeta(
   }, baseUrl)
 
   if (!res.ok) {
-    throw new Error(`Download failed: ${res.status}`)
+    let code: string | undefined
+    let message = `Download failed: ${res.status}`
+    try {
+      const body = await res.json() as { error?: { code?: string; message?: string } }
+      if (body.error?.message) message = body.error.message
+      code = body.error?.code
+    } catch { /* non-JSON body — keep default message */ }
+    throw new ApiError(message, res.status, code)
   }
 
   const arrayBuf = await res.arrayBuffer()

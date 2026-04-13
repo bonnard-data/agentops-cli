@@ -46,9 +46,7 @@ export async function whoamiCommand(opts: { url?: string }) {
   const { limits } = me.entitlements
   const skillsLimit = limits.maxSkills ?? '∞'
   const seatsLimit = limits.maxSeats ?? '∞'
-  const storageLimit = limits.storageQuotaBytes
-    ? `${(limits.storageQuotaBytes / 1024 / 1024 / 1024).toFixed(0)} GB`
-    : '∞'
+  const storageLimit = limits.storageQuotaBytes ? formatBytes(limits.storageQuotaBytes) : '∞'
   const storageUsed = formatBytes(me.usage.storageBytes)
   const bundleLimit = `${limits.maxBundleSizeBytes / 1024 / 1024} MB`
 

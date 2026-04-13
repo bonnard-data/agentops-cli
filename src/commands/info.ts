@@ -143,6 +143,8 @@ async function renderPinnedVersion(name: string, version: number, baseUrl: strin
     console.error(pc.red(err.error?.message ?? `Error: ${versionsRes.status}`))
     if (err.error?.code === 'not_found') {
       console.log(pc.dim(`  Search the library: agentops skills search ${name}`))
+    } else if (err.error?.code === 'feature_gated') {
+      console.log(pc.dim('  agentops whoami — check your current plan'))
     }
     process.exit(1)
   }

@@ -177,7 +177,7 @@ export function validateSkill(skillDir: string): ValidationResult {
           warnings.push({
             severity: 'warning',
             message: `Large file: ${relPath} (${(size / 1024 / 1024).toFixed(1)}MB)`,
-            hint: 'Skill bundles are limited to 10MB total. Consider assets/ for large resources.',
+            hint: 'Consider assets/ for large resources. Check your plan\'s bundle limit with: agentops whoami',
           })
         }
       }

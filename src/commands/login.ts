@@ -1,9 +1,16 @@
 import crypto from 'node:crypto'
 import http from 'node:http'
+import readline from 'node:readline/promises'
 import pc from 'picocolors'
 import open from 'open'
 import { getBaseUrl, post } from '../lib/api.js'
-import { saveCredentials, saveConfig, loadConfig, validateCredentials } from '../lib/credentials.js'
+import {
+  saveCredentials,
+  saveConfig,
+  loadConfig,
+  validateCredentials,
+  type Credentials,
+} from '../lib/credentials.js'
 
 const CALLBACK_HOST = '127.0.0.1'
 
@@ -57,11 +64,19 @@ export async function loginCommand(options: { url?: string }) {
       process.exit(1)
     }
 
-    const data: unknown = await callbackRes.json()
-    const creds = validateCredentials(data)
-    if (!creds) {
-      console.error(pc.red('Server returned an unexpected response format.'))
-      process.exit(1)
+    const data = await callbackRes.json() as Record<string, unknown>
+
+    // 3a. New user with no org memberships yet — run the onboarding prompt
+    let creds: Credentials | null
+    if (data.needsOnboarding === true) {
+      creds = await onboardNewUser(data, baseUrl)
+      if (!creds) process.exit(1)
+    } else {
+      creds = validateCredentials(data)
+      if (!creds) {
+        console.error(pc.red('Server returned an unexpected response format.'))
+        process.exit(1)
+      }
     }
 
     // 4. Save credentials and config
@@ -151,6 +166,73 @@ function waitForCallback(
       resolve({ code, state })
     })
   })
+}
+
+/**
+ * First-time user path: the server returned needsOnboarding=true because
+ * the authenticated user has no WorkOS organization memberships. Prompt
+ * for an org name, call POST /api/auth/create-org with the pre-provisioned
+ * access token, and return the finalized credentials.
+ */
+async function onboardNewUser(
+  pending: Record<string, unknown>,
+  baseUrl: string,
+): Promise<Credentials | null> {
+  const accessToken = typeof pending.accessToken === 'string' ? pending.accessToken : null
+  const refreshToken = typeof pending.refreshToken === 'string' ? pending.refreshToken : null
+  const userFromCallback = pending.user as Record<string, unknown> | undefined
+  const email = userFromCallback && typeof userFromCallback.email === 'string' ? userFromCallback.email : null
+
+  if (!accessToken || !email) {
+    console.error(pc.red('Server returned an unexpected onboarding response.'))
+    return null
+  }
+
+  console.log()
+  console.log(pc.bold(`Welcome, ${email}!`))
+  console.log(pc.dim("You don't belong to an organization yet. Name one to get started."))
+  console.log()
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+  let orgName: string
+  try {
+    orgName = (await rl.question('Organization name: ')).trim()
+  } finally {
+    rl.close()
+  }
+
+  if (!orgName) {
+    console.error(pc.red('Organization name is required.'))
+    return null
+  }
+
+  console.log(pc.dim(`Creating "${orgName}"...`))
+  const res = await fetch(`${baseUrl}/api/auth/create-org`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ name: orgName }),
+  })
+
+  if (!res.ok) {
+    const body = await res.text()
+    console.error(pc.red(`Failed to create organization: ${body}`))
+    return null
+  }
+
+  const result = await res.json() as {
+    org: { id: number; slug: string; name: string }
+    user: { id: number; email: string; name: string; role: string }
+  }
+
+  return {
+    accessToken,
+    refreshToken,
+    user: result.user,
+    org: result.org,
+  }
 }
 
 /** Static HTML page — never interpolate user/query data into this */

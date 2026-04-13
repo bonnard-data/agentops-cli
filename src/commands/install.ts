@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import pc from 'picocolors'
-import { post, downloadBundleWithMeta, getBaseUrl } from '../lib/api.js'
+import { post, downloadBundleWithMeta, getBaseUrl, ApiError } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
 import { getInstallDir, parseSkillSpec, type SkillSpec } from '../lib/skills.js'
 import { unpackSkill } from '../lib/pack.js'
@@ -71,8 +71,16 @@ export async function installCommand(
     tgz = buffer
     downloadedVersion = serverVersion
   } catch (err) {
-    console.error(pc.red(`Download failed: ${(err as Error).message}`))
-    console.log(pc.dim(`  The skill exists but has no published bundle yet.`))
+    if (err instanceof ApiError) {
+      console.error(pc.red(err.message))
+      if (err.code === 'feature_gated') {
+        console.log(pc.dim('  agentops whoami — check your current plan'))
+      } else if (err.code === 'invalid_state') {
+        console.log(pc.dim('  The skill exists but has no published bundle yet.'))
+      }
+    } else {
+      console.error(pc.red(`Download failed: ${(err as Error).message}`))
+    }
     process.exit(1)
   }
   console.log(pc.dim(`Bundle: ${(tgz.length / 1024).toFixed(1)} KB`))
