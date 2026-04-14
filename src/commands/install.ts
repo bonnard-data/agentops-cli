@@ -1,9 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import pc from 'picocolors'
-import { post, downloadBundleWithMeta, getBaseUrl, ApiError } from '../lib/api.js'
+import { post, get, downloadBundleWithMeta, getBaseUrl, ApiError } from '../lib/api.js'
 import { loadCredentials } from '../lib/credentials.js'
-import { getInstallDir, parseSkillSpec, type SkillSpec } from '../lib/skills.js'
+import {
+  getInstallDir,
+  parseSkillSpec,
+  updateSkillMdFrontmatter,
+  type SkillSpec,
+} from '../lib/skills.js'
 import { unpackSkill } from '../lib/pack.js'
 
 export async function installCommand(
@@ -90,6 +95,19 @@ export async function installCommand(
     fs.rmSync(dir, { recursive: true, force: true })
   }
   await unpackSkill(tgz, dir)
+
+  // Sync the extracted SKILL.md frontmatter with the current server-side
+  // metadata. This is how web-UI edits (e.g. tag changes) propagate back to
+  // the author's local file the next time they install.
+  try {
+    const metaRes = await get(`/api/skills/${encodeURIComponent(name)}`, baseUrl)
+    if (metaRes.ok) {
+      const meta = await metaRes.json() as { tags?: string[] }
+      if (Array.isArray(meta.tags)) {
+        updateSkillMdFrontmatter(dir, { tags: meta.tags })
+      }
+    }
+  } catch { /* best effort — don't fail install */ }
 
   // Write .agentops-version sidecar so `list` can show "update available" later
   if (downloadedVersion != null) {

@@ -86,7 +86,7 @@ export async function del(path: string, baseUrl: string): Promise<Response> {
 export async function uploadSkill(
   apiPath: string,
   method: 'POST' | 'PUT',
-  metadata: { name?: string; description: string; content: string; tags: string[] },
+  metadata: { name?: string; description: string; content: string; tags?: string[] },
   tgz: Buffer,
   baseUrl: string,
 ): Promise<Response> {
@@ -94,7 +94,11 @@ export async function uploadSkill(
   if (metadata.name) form.append('name', metadata.name)
   form.append('description', metadata.description)
   form.append('content', metadata.content)
-  form.append('tags', JSON.stringify(metadata.tags))
+  // Only attach `tags` when the caller explicitly provided it. When omitted,
+  // the server preserves whatever tags are already stored for this skill.
+  if (metadata.tags !== undefined) {
+    form.append('tags', JSON.stringify(metadata.tags))
+  }
   form.append('bundle', new Blob([new Uint8Array(tgz)], { type: 'application/gzip' }), 'bundle.tgz')
 
   // Let fetch set Content-Type with boundary automatically — don't set it manually

@@ -98,7 +98,6 @@ skills
 skills
   .command('create [name]')
   .description('Scaffold a new skill locally')
-  .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .option('--user', 'Create at user-level (available in all projects)')
   .option('--project', 'Create at project-level (default)')
   .action(createCommand)
@@ -111,7 +110,6 @@ skills
 skills
   .command('submit <name>')
   .description('Publish a skill — creates a new version each time')
-  .option('--tags <tags>', 'Tags for discovery (comma-separated)')
   .action(submitCommand)
 
 skills

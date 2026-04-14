@@ -13,7 +13,7 @@ interface ServerSkill {
   hasDraft: boolean
 }
 
-export async function submitCommand(name: string, opts: { tags?: string }) {
+export async function submitCommand(name: string) {
   const creds = loadCredentials()
   if (!creds) {
     console.log(pc.yellow('Not logged in. Run: agentops login'))
@@ -44,9 +44,10 @@ export async function submitCommand(name: string, opts: { tags?: string }) {
     console.log(pc.yellow(`${check.warnings.length} warning(s) — submitting anyway\n`))
   }
 
-  const tags = opts.tags
-    ? opts.tags.split(',').map((t) => t.trim()).filter(Boolean)
-    : frontmatter.tags
+  // Tags come only from frontmatter. Undefined when SKILL.md has no `tags:`
+  // key — we omit the field from the upload so the server preserves whatever
+  // it already has (could be from a previous CLI submit, or a web UI edit).
+  const tags = frontmatter.tags
 
   // Pack the skill folder
   console.log(pc.dim(`Packing "${frontmatter.name}"...`))
@@ -110,7 +111,7 @@ export async function submitCommand(name: string, opts: { tags?: string }) {
   }
 
   const result = await submitRes.json() as { status: string; autoPublished?: boolean; version?: number; latestVersion?: number }
-  const tagList = tags.length > 0 ? ` [${tags.join(', ')}]` : ''
+  const tagList = tags && tags.length > 0 ? ` [${tags.join(', ')}]` : ''
 
   // Resolve the new version number (v1 on first publish, v2/v3/... on updates)
   const newVersion = result.version ?? result.latestVersion

@@ -264,7 +264,12 @@ export function scanLocalSkills(): ScanResult {
 export interface SkillFrontmatter {
   name: string
   description: string
-  tags: string[]
+  /**
+   * Tags are undefined when the YAML block has no `tags:` key. An empty
+   * array means the user explicitly set `tags: []`. This distinction matters
+   * on submit: absent → server preserves existing; explicit empty → clears.
+   */
+  tags?: string[]
 }
 
 /**
@@ -300,8 +305,10 @@ export function parseSkillMd(raw: string, nameFromDir?: string): { frontmatter: 
     throw new Error('Frontmatter must include "description"')
   }
 
-  // Tags can be a YAML array or comma-separated string
-  let tags: string[] = []
+  // Tags can be a YAML array or comma-separated string. Leave tags
+  // `undefined` when the key is absent so submit can omit the field and let
+  // the server preserve whatever's already stored.
+  let tags: string[] | undefined
   if (Array.isArray(fm.tags)) {
     tags = fm.tags.filter((t): t is string => typeof t === 'string').map((t) => t.trim()).filter(Boolean)
   } else if (typeof fm.tags === 'string') {
@@ -325,6 +332,44 @@ export function readSkillMd(skillDir: string): { frontmatter: SkillFrontmatter; 
   const raw = fs.readFileSync(filePath, 'utf-8')
   const dirName = path.basename(skillDir)
   return parseSkillMd(raw, dirName)
+}
+
+/**
+ * Rewrite the frontmatter of an already-extracted SKILL.md, merging the
+ * provided updates into the existing YAML block. Used by `install` to sync
+ * server-side metadata (e.g. tags edited via the web UI) back into the local
+ * file after unpacking the bundle.
+ *
+ * Only touches the frontmatter — the markdown body is preserved byte-for-byte.
+ */
+export function updateSkillMdFrontmatter(
+  skillDir: string,
+  updates: Partial<Pick<SkillFrontmatter, 'description' | 'tags'>>,
+): void {
+  const filePath = path.join(skillDir, 'SKILL.md')
+  if (!fs.existsSync(filePath)) return
+
+  const raw = fs.readFileSync(filePath, 'utf-8')
+  const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
+  if (!match) return
+
+  const [, fmBlock, body] = match
+  let fm: Record<string, unknown>
+  try {
+    fm = (YAML.parse(fmBlock!) ?? {}) as Record<string, unknown>
+  } catch {
+    return
+  }
+
+  if (updates.description !== undefined) fm.description = updates.description
+  if (updates.tags !== undefined) {
+    if (updates.tags.length > 0) fm.tags = updates.tags
+    else delete fm.tags
+  }
+
+  const newBlock = YAML.stringify(fm).trimEnd()
+  const rebuilt = `---\n${newBlock}\n---\n\n${(body ?? '').replace(/^\n+/, '')}`
+  fs.writeFileSync(filePath, rebuilt)
 }
 
 /**

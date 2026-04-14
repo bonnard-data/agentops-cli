@@ -188,7 +188,7 @@ async function renderPinnedVersion(name: string, version: number, baseUrl: strin
   } else {
     console.log(pc.dim(`${publishedDate} · ${sizeKb} KB`))
   }
-  if (frontmatter.tags.length > 0) {
+  if (frontmatter.tags && frontmatter.tags.length > 0) {
     console.log(pc.dim(`[${frontmatter.tags.join(', ')}]`))
   }
   console.log()

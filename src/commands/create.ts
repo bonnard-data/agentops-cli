@@ -1,7 +1,7 @@
 import pc from 'picocolors'
 import { getSkillDir, scaffoldSkill } from '../lib/skills.js'
 
-export async function createCommand(name: string | undefined, opts: { tags?: string; user?: boolean; project?: boolean }) {
+export async function createCommand(name: string | undefined, opts: { user?: boolean; project?: boolean }) {
   const skillName = name ?? 'my-skill'
 
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(skillName) || skillName.length > 64) {
@@ -31,10 +31,6 @@ export async function createCommand(name: string | undefined, opts: { tags?: str
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ')
 
-  const tags = opts.tags
-    ? opts.tags.split(',').map((t) => t.trim()).filter(Boolean)
-    : undefined
-
   const content = `# ${title}
 
 Describe the skill's purpose and workflow here.
@@ -53,13 +49,13 @@ Describe the skill's purpose and workflow here.
   const dir = scaffoldSkill({
     name: skillName,
     description: 'A brief description of what this skill does and when to use it',
-    tags,
+    tags: ['example'],
     content,
   }, scope)
 
   const scopeLabel = scope.user ? 'user' : 'project'
-  const tagsHint = opts.tags ? '' : ' --tags engineering,testing'
   console.log(pc.green(`✓ Created ${dir}/SKILL.md (${scopeLabel})`))
   console.log(pc.dim(`  Edit it, add scripts/ or references/ as needed.`))
-  console.log(pc.dim(`  Then share with: agentops skills submit ${skillName}${tagsHint}`))
+  console.log(pc.dim(`  Update the tags in the frontmatter before submitting.`))
+  console.log(pc.dim(`  Then share with: agentops skills submit ${skillName}`))
 }
