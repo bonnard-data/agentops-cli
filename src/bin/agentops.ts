@@ -19,6 +19,7 @@ import { whoamiCommand } from '../commands/whoami.js'
 import { historyCommand } from '../commands/history.js'
 import { rollbackCommand } from '../commands/rollback.js'
 import { deleteCommand } from '../commands/delete.js'
+import { orgSettingsGetCommand, orgSettingsSetCommand } from '../commands/org.js'
 import { clearCredentials } from '../lib/credentials.js'
 
 // Read version from package.json at runtime.
@@ -222,5 +223,36 @@ skills
   .description('Permanently delete a skill and all its versions (admin only)')
   .option('--force', 'Confirm the deletion')
   .action(deleteCommand)
+
+// ─── Org subcommand group ────────────────────────────────────────────────
+
+const org = program
+  .command('org')
+  .description('Manage org settings (admin only for mutations)')
+
+const orgSettings = org
+  .command('settings')
+  .description('View or update org settings')
+  .addHelpText('after', `
+Examples:
+  $ agentops org settings get
+  $ agentops org settings set auto-publish false     # require admin review
+  $ agentops org settings set auto-publish true      # publish immediately
+
+Settings:
+  auto-publish          Whether skill submissions publish immediately.
+                        When false, submissions enter the admin review queue.
+  allow-public-domains  Whether members can sign up with gmail.com etc.
+`)
+
+orgSettings
+  .command('get')
+  .description('Show current org settings')
+  .action(orgSettingsGetCommand)
+
+orgSettings
+  .command('set <key> <value>')
+  .description('Update an org setting (admin only)')
+  .action(orgSettingsSetCommand)
 
 program.parse()
