@@ -9,11 +9,10 @@ export async function deleteCommand(name: string, opts: { force?: boolean }) {
     process.exit(1)
   }
 
-  if (creds.user.role !== 'admin') {
-    console.error(pc.red('Only admins can delete skills.'))
-    console.log(pc.dim(`  Your role: ${creds.user.role}. Ask an admin to delete "${name}".`))
-    process.exit(1)
-  }
+  // Delete eligibility is enforced server-side:
+  //   - Admins can delete any skill
+  //   - Authors can delete their own non-published skills
+  // The server returns a clear 403 message on violation.
 
   if (!opts.force) {
     console.log(pc.yellow(`About to permanently delete "${name}" and all its versions.`))
@@ -30,8 +29,6 @@ export async function deleteCommand(name: string, opts: { force?: boolean }) {
     console.error(pc.red(err.error?.message ?? `Error: ${res.status}`))
     if (err.error?.code === 'not_found') {
       console.log(pc.dim(`  Check spelling: agentops skills search ${name}`))
-    } else if (err.error?.code === 'forbidden') {
-      console.log(pc.dim('  Only admins can delete skills.'))
     }
     process.exit(1)
   }

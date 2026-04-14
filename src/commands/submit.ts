@@ -64,15 +64,10 @@ export async function submitCommand(name: string) {
   const existingRes = await get(`/api/skills/${encodeURIComponent(frontmatter.name)}`, baseUrl)
   const existing: ServerSkill | null = existingRes.ok ? await existingRes.json() as ServerSkill : null
 
-  // If submitted and awaiting review, block
-  if (existing?.status === 'submitted') {
-    console.error(pc.red(`"${frontmatter.name}" is already submitted for review.`))
-    console.log(pc.dim('  Wait for an admin to approve or reject, then you can edit again.'))
-    console.log(pc.dim('  Check status: agentops skills mine'))
-    process.exit(1)
-  }
-
-  // Upload the bundle via POST (new) or PUT (update existing)
+  // Upload the bundle via POST (new) or PUT (update existing). If the
+  // skill is currently `submitted`, the server silently withdraws it back
+  // to draft on PUT — authors can iterate on their own submissions without
+  // asking an admin to reject first.
   const isNew = !existing
   const uploadPath = isNew
     ? '/api/skills'
