@@ -20,6 +20,7 @@ import { historyCommand } from '../commands/history.js'
 import { rollbackCommand } from '../commands/rollback.js'
 import { deleteCommand } from '../commands/delete.js'
 import { orgSettingsGetCommand, orgSettingsSetCommand } from '../commands/org.js'
+import { pendingCommand } from '../commands/pending.js'
 import { clearCredentials } from '../lib/credentials.js'
 
 // Read version from package.json at runtime.
@@ -202,6 +203,22 @@ skills
   .command('mine')
   .description('Show skills you\'ve authored (draft, submitted, published, rejected)')
   .action(mineCommand)
+
+skills
+  .command('pending')
+  .description('Show skills awaiting admin review (admin only)')
+  .action(pendingCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills pending
+
+Lists every skill in the org currently in \`submitted\` state, with the
+author and a one-line description. Admins only.
+
+Act on a specific submission:
+  $ agentops skills approve <name>
+  $ agentops skills reject <name> --comment "<reason>"
+`)
 
 skills
   .command('approve <name>')
