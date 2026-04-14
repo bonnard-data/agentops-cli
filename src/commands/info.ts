@@ -21,6 +21,7 @@ interface SkillInfo {
   latestVersion: number
   hasDraft: boolean
   rejectionComment: string | null
+  fileCount: number | null
   author: string | null
   createdAt: string
   updatedAt: string
@@ -90,6 +91,9 @@ async function renderLatest(name: string, baseUrl: string) {
   }
   if (skill.tags.length > 0) {
     console.log(pc.dim(`[${skill.tags.join(', ')}]`))
+  }
+  if (typeof skill.fileCount === 'number') {
+    console.log(pc.dim(`${skill.fileCount} ${skill.fileCount === 1 ? 'file' : 'files'}`))
   }
   console.log()
 
