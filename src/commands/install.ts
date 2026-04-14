@@ -120,5 +120,6 @@ export async function installCommand(
   const versionLabel = downloadedVersion != null ? ` v${downloadedVersion}` : ''
   console.log(pc.green(`✓ Installed "${name}"${versionLabel} (${scopeLabel})`))
   console.log(pc.dim(`  ${dir}`))
+  console.log(pc.dim(`  Invoke with: /${name}  (in Claude Code)`))
 }
 

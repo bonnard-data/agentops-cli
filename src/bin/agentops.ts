@@ -62,6 +62,15 @@ program
 const skills = program
   .command('skills')
   .description('Manage org skills — search, install, create, submit, version')
+  .addHelpText('after', `
+Typical authoring workflow:
+  $ agentops skills create my-skill
+  $ agentops skills check my-skill
+  $ agentops skills submit my-skill
+
+SKILL.md format reference:
+  https://docs.claude.com/en/docs/claude-code/skills
+`)
 
 skills
   .command('search [query]')
@@ -71,11 +80,24 @@ skills
   .option('--author <name>', 'Filter by author name')
   .option('--status <status>', 'Filter by status (admin only)')
   .action(searchCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills search invoice                 # text search name + description
+  $ agentops skills search --tags finance,pdf      # filter by one or more tags
+  $ agentops skills search --tags                  # list all tags in the org
+  $ agentops skills search --authors               # list all authors + skill counts
+  $ agentops skills search --author alex           # filter by author name
+`)
 
 skills
   .command('info <spec>')
   .description('Show details for a skill — use <name> for latest or <name>@v1 for a specific version')
   .action(infoCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills info invoice-maker             # latest published version
+  $ agentops skills info invoice-maker@v1          # a specific historical version
+`)
 
 skills
   .command('install <spec>')
@@ -84,6 +106,16 @@ skills
   .option('--project', 'Install to project-level (default)')
   .option('--force', 'Overwrite existing skill')
   .action(installCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills install invoice-maker          # latest, project scope
+  $ agentops skills install invoice-maker --user   # user scope (all projects)
+  $ agentops skills install invoice-maker@v2       # pin to v2 (pro+)
+  $ agentops skills install invoice-maker --force  # overwrite existing
+
+After install, invoke the skill in Claude Code with /<skill-name>.
+The local SKILL.md is rewritten with the latest server tags on every install.
+`)
 
 skills
   .command('uninstall <name>')
@@ -101,26 +133,69 @@ skills
   .option('--user', 'Create at user-level (available in all projects)')
   .option('--project', 'Create at project-level (default)')
   .action(createCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills create invoice-maker           # project scope (default)
+  $ agentops skills create shared-utils --user     # user scope (all projects)
+
+The scaffolded SKILL.md includes a commented reference block with the
+full frontmatter vocabulary (when_to_use, allowed-tools, context: fork,
+etc.) and supporting-file conventions (scripts/, references/, assets/).
+Read it before submitting.
+`)
 
 skills
   .command('check <name>')
   .description('Check a local skill for issues before submitting')
   .action(checkCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills check invoice-maker
+
+Runs local validation only — frontmatter, file layout, size heuristics.
+Nothing is uploaded. Use this before submit to catch issues early.
+`)
 
 skills
   .command('submit <name>')
   .description('Publish a skill — creates a new version each time')
   .action(submitCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills submit invoice-maker
+
+Tags are read from the \`tags:\` line in SKILL.md frontmatter.
+  - Omit the line   → server preserves existing tags
+  - tags: []        → clears tags on the server
+  - tags: [a, b]    → replaces with [a, b]
+
+On free plan, submissions auto-publish immediately. On pro+ plans they
+enter a review queue unless your org has auto-publish enabled.
+`)
 
 skills
   .command('history <name>')
   .description('Show version history for a skill')
   .action(historyCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills history invoice-maker
+
+Shows every published version with date, author, and size.
+Requires a Pro+ plan.
+`)
 
 skills
   .command('rollback <spec>')
   .description('Re-publish an older version as the new latest — use <name>@v<N> (pro+)')
   .action(rollbackCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills rollback invoice-maker@v2      # re-publish v2 as a new version
+
+Rollback doesn't delete anything — it snapshots an older version's bundle
+as the new latest. Requires a Pro+ plan.
+`)
 
 skills
   .command('mine')
@@ -137,6 +212,10 @@ skills
   .description('Reject a submitted skill (admin only)')
   .requiredOption('--comment <comment>', 'Reason for rejection')
   .action(rejectCommand)
+  .addHelpText('after', `
+Examples:
+  $ agentops skills reject invoice-maker --comment "Missing error handling in scripts/"
+`)
 
 skills
   .command('delete <name>')

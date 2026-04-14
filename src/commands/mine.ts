@@ -48,7 +48,8 @@ export async function mineCommand() {
       console.log(`    ${pc.dim(`Edit and resubmit: agentops skills submit ${s.name}`)}`)
     }
     if (s.status === 'draft') {
-      console.log(`    ${pc.dim(`Submit: agentops skills submit ${s.name} --tags <tags>`)}`)
+      console.log(`    ${pc.dim(`Submit: agentops skills submit ${s.name}`)}`)
+      console.log(`    ${pc.dim('(set tags in SKILL.md frontmatter before submitting)')}`)
     }
   }
 }

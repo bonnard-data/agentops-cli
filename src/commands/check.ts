@@ -26,12 +26,15 @@ export async function checkCommand(name: string) {
 
   if (result.ok && result.warnings.length === 0) {
     console.log(pc.green('✓ No issues found'))
+    console.log(pc.dim('  Submit: agentops skills submit ' + name))
+    console.log(pc.dim('  Check bundle-size + skill-count limits: agentops whoami'))
     return
   }
 
   if (result.ok) {
     console.log(pc.yellow(`\n${result.warnings.length} warning(s) — skill is submittable`))
     console.log(pc.dim('  Submit: agentops skills submit ' + name))
+    console.log(pc.dim('  Check bundle-size + skill-count limits: agentops whoami'))
     return
   }
 

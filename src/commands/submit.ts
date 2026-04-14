@@ -123,6 +123,9 @@ export async function submitCommand(name: string) {
       console.log(pc.green(`✓ "${frontmatter.name}" published v${newVersion}${tagList}`))
     }
     console.log(pc.dim(`  Install: agentops skills install ${frontmatter.name}`))
+    if (typeof newVersion === 'number' && newVersion >= 2) {
+      console.log(pc.dim(`  History: agentops skills history ${frontmatter.name}  (pro+)`))
+    }
   } else {
     if (existing && existing.latestVersion > 0) {
       console.log(pc.green(`✓ "${frontmatter.name}" submitted for review${tagList}`))
@@ -130,6 +133,6 @@ export async function submitCommand(name: string) {
     } else {
       console.log(pc.green(`✓ "${frontmatter.name}" submitted for review${tagList}`))
     }
-    console.log(pc.dim(`  Check status: agentops skills mine`))
+    console.log(pc.dim(`  An admin will approve or reject. Check status: agentops skills mine`))
   }
 }
